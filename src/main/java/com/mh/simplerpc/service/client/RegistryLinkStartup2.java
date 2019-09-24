@@ -26,8 +26,8 @@ import org.slf4j.LoggerFactory;
 import java.net.InetSocketAddress;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 public class RegistryLinkStartup2 implements AuthStateListener {
@@ -39,7 +39,7 @@ public class RegistryLinkStartup2 implements AuthStateListener {
     private ServiceMessage serviceMessage;
     private int tryConnectNum;
     private int tryRecoveryConnectNum;
-    private Timer timer = new Timer();
+    private ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(100);
 
     private static Logger logger = LoggerFactory.getLogger(RegistryLinkStartup2.class);
 
@@ -98,14 +98,13 @@ public class RegistryLinkStartup2 implements AuthStateListener {
 //        tryConnectListener.setAuthConnectRecovery(true);
 //        startLink(tryConnectListener);
 
-        timer.schedule(new TimerTask() {
-            @Override
+        scheduledExecutorService.schedule(new Runnable() {
             public void run() {
                 TryConnectListener tryConnectListener = new TryConnectListener(accessIpAdder,accessPort);
                 tryConnectListener.setAuthConnectRecovery(true);
                 startLink(tryConnectListener);
             }
-        },1000 * 10);
+        },10,TimeUnit.SECONDS);
     }
 
     public void startLink() {
@@ -209,12 +208,11 @@ public class RegistryLinkStartup2 implements AuthStateListener {
 //                }
 //            }, 10, TimeUnit.SECONDS);
 
-            timer.schedule(new TimerTask() {
-                @Override
+            scheduledExecutorService.schedule(new Runnable() {
                 public void run() {
                     startLink(TryConnectListener.this);
                 }
-            },1000 * 10);
+            },10,TimeUnit.SECONDS);
 
         }
     }
