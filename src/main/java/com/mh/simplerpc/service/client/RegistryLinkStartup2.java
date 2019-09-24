@@ -88,7 +88,7 @@ public class RegistryLinkStartup2 implements AuthStateListener {
 
     public void authSuccessDisconnect(ChannelHandlerContext channelHandlerContext, InetSocketAddress localAddress, InetSocketAddress remoteAddress) {
 
-        logger.info("link connect and auth success, now is disconnect,try again connect again");
+        logger.info("link connect and auth success, now is disconnect,try connect again");
 //        logger.info(remoteAddress.getAddress().toString());// this address prefix is '/'
 //        logger.info(remoteAddress.getHostName());// if link adder is '127.0.0.1' ,then host is not match
 //        logger.info(String.valueOf(remoteAddress.getPort()));
@@ -202,11 +202,19 @@ public class RegistryLinkStartup2 implements AuthStateListener {
             }
 
             logger.info(String.format("connect fail---%s:%s", accessIpAdder, accessPort));
-            channelFuture.channel().eventLoop().schedule(new Runnable() {
+//            // NioEventLoopGroup => group will be 'null',this code will be not work
+//            channelFuture.channel().eventLoop().schedule(new Runnable() {
+//                public void run() {
+//                    startLink(TryConnectListener.this);
+//                }
+//            }, 10, TimeUnit.SECONDS);
+
+            timer.schedule(new TimerTask() {
+                @Override
                 public void run() {
                     startLink(TryConnectListener.this);
                 }
-            }, 10, TimeUnit.SECONDS);
+            },1000 * 10);
 
         }
     }
