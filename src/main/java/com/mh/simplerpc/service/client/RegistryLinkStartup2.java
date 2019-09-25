@@ -152,6 +152,7 @@ public class RegistryLinkStartup2 implements AuthStateListener {
 //                }
 //            });
 
+            logger.info(String.format("try connect client %s:%s",accessIpAdder,accessPort));
             ChannelFuture channelFuture = bootstrap.connect(accessIpAdder,accessPort);
             channelFuture.addListener(reconnectListener);
 

@@ -20,6 +20,7 @@ import io.netty.handler.codec.http.HttpObjectAggregator;
 import io.netty.handler.codec.http.websocketx.WebSocketClientProtocolHandler;
 import io.netty.handler.codec.http.websocketx.WebSocketVersion;
 import io.netty.handler.stream.ChunkedWriteHandler;
+import io.netty.handler.timeout.IdleStateHandler;
 
 import java.net.URI;
 
@@ -47,6 +48,10 @@ public class WebSocketChannelInitializer extends ChannelInitializer<SocketChanne
         ChannelPipeline pipeline = socketChannel.pipeline();
 
 //        pipeline.addFirst("LogHandler",new LoggingHandler(LogLevel.INFO));
+
+        // intercept connect success but link unchanged to websocket agreement communication (check function)
+        // client will be 10sec heartbeat.read time cut connect timeout is 15sec,else 'write' 'all' will be 5min close connect
+        pipeline.addLast("IdleStateHandler",new IdleStateHandler(0,20,0));
 
         pipeline.addLast("HttpServerCodec", new HttpClientCodec());
         pipeline.addLast("ChunkedWriteHandler", new ChunkedWriteHandler());
