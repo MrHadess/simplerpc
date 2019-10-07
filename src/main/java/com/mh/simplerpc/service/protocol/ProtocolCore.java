@@ -12,10 +12,7 @@ import com.google.gson.Gson;
 import com.mh.simplerpc.ServiceConfig;
 import com.mh.simplerpc.ServiceManager;
 import com.mh.simplerpc.dto.ProviderInfo;
-import com.mh.simplerpc.exceptions.DoesNotConnectException;
-import com.mh.simplerpc.exceptions.RemoteInvokeException;
-import com.mh.simplerpc.exceptions.RemoteUnsupportedResException;
-import com.mh.simplerpc.exceptions.UnknownResourceException;
+import com.mh.simplerpc.exceptions.*;
 import com.mh.simplerpc.pojo.InvokeObjectInfo;
 import com.mh.simplerpc.pojo.InvokeObjectResultInfo;
 import com.mh.simplerpc.service.ServiceProtocol;
@@ -37,6 +34,7 @@ import java.util.concurrent.Executors;
 public class ProtocolCore implements ServiceProtocol.Invocation,CallRemote {
 
     private static Logger logger = LoggerFactory.getLogger(ProtocolCore.class);
+    private static Logger invokeObjectRunnableLogger = LoggerFactory.getLogger(InvokeObjectRunnable.class);
 
     private ServiceProtocol.Result resultControl;
     private Gson gson = ServiceManager.getGson();
@@ -100,22 +98,25 @@ public class ProtocolCore implements ServiceProtocol.Invocation,CallRemote {
         public void run() {
             try {
                 invokeObjectResultInfo = callToFunction.call(invokeObjectInfo);
-                resultControl.remoteInvokeObjectResult(processID,invokeObjectResultInfo);
+                resultControl.remoteInvokeObjectResult(processID, invokeObjectResultInfo);
                 return;
+            } catch (NotEmptyConstructorException e) {
+                invokeObjectRunnableLogger.error("NotEmptyConstructorException",e);
+                invokeObjectResultInfo = new InvokeObjectResultInfo.Builder().setException(e).build();
             } catch (InstantiationException e) {
-                e.printStackTrace();
+                invokeObjectRunnableLogger.error("InstantiationException",e);
                 invokeObjectResultInfo = new InvokeObjectResultInfo.Builder().setException(e).build();
             } catch (IllegalAccessException e) {
-                e.printStackTrace();
+                invokeObjectRunnableLogger.error("IllegalAccessException",e);
                 invokeObjectResultInfo = new InvokeObjectResultInfo.Builder().setException(e).build();
             } catch (NoSuchMethodException e) {
-                e.printStackTrace();
+                invokeObjectRunnableLogger.error("NoSuchMethodException",e);
                 invokeObjectResultInfo = new InvokeObjectResultInfo.Builder().setException(e).build();
             } catch (ClassNotFoundException e) {
-                e.printStackTrace();
+                invokeObjectRunnableLogger.error("ClassNotFoundException",e);
                 invokeObjectResultInfo = new InvokeObjectResultInfo.Builder().setException(e).build();
             } catch (InvocationTargetException e) {
-                e.printStackTrace();
+                invokeObjectRunnableLogger.error("InvocationTargetException",e);
                 invokeObjectResultInfo = new InvokeObjectResultInfo.Builder().setException(e).build();
             }
 

@@ -9,8 +9,10 @@
 package com.mh.simplerpc.service.protocol;
 
 import com.mh.simplerpc.config.ProviderEntity;
+import com.mh.simplerpc.exceptions.NotEmptyConstructorException;
 import com.mh.simplerpc.exceptions.UnknownResourceException;
 
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.List;
@@ -38,7 +40,7 @@ public class CacheToInvokeObject {
 
     }
 
-    public Object getInstantiationObject(String res) throws UnknownResourceException,IllegalAccessException, InstantiationException {
+    public Object getInstantiationObject(String res) throws UnknownResourceException,NotEmptyConstructorException,IllegalAccessException, InstantiationException {
         Object instanceObject = instanceObjectMap.get(res);
         if (instanceObject != null) return instanceObject;
         synchronized (CacheToInvokeObject.this) {
@@ -49,18 +51,16 @@ public class CacheToInvokeObject {
             ProviderEntity providerEntity = providerEntityMap.get(res);// unknown object
             if (providerEntity == null) throw new UnknownResourceException(res);
 
-//            try {
-                instanceObject = providerEntity.getToEntityClass().newInstance();
-                instanceObjectMap.put(res,instanceObject);
-//            } catch (IllegalAccessException e) {
-////                私有修饰
-//            } catch (InstantiationException e) {
-////                无空构造参数
-//            }
-
+            Class<?> instanceObjClass = providerEntity.getToEntityClass();
+            for (Constructor item:instanceObjClass.getConstructors()) {
+                if (item.getParameterTypes().length <= 0) {
+                    instanceObject = instanceObjClass.newInstance();
+                    instanceObjectMap.put(res,instanceObject);
+                    return instanceObject;
+                }
+            }
+            throw new NotEmptyConstructorException();
         }
-
-        return instanceObject;
     }
 
 

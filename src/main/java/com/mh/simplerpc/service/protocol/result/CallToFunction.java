@@ -10,6 +10,7 @@ package com.mh.simplerpc.service.protocol.result;
 
 import com.google.gson.Gson;
 import com.mh.simplerpc.ServiceManager;
+import com.mh.simplerpc.exceptions.NotEmptyConstructorException;
 import com.mh.simplerpc.pojo.InvokeObjectInfo;
 import com.mh.simplerpc.pojo.InvokeObjectResultInfo;
 import com.mh.simplerpc.service.protocol.CacheToInvokeObject;
@@ -33,7 +34,7 @@ public class CallToFunction {
     }
 
     public InvokeObjectResultInfo call(InvokeObjectInfo invokeObjectInfo)
-            throws InstantiationException, IllegalAccessException, NoSuchMethodException, ClassNotFoundException, InvocationTargetException {
+            throws NotEmptyConstructorException,InstantiationException, IllegalAccessException, NoSuchMethodException, ClassNotFoundException, InvocationTargetException {
 
         Object providerObject = cacheToInvokeObject.getInstantiationObject(invokeObjectInfo.getRes());
         final Method invokeMethod = cacheToInvokeObject.getInvokeObjectMethod(

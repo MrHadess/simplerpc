@@ -21,6 +21,10 @@ import java.util.List;
 * */
 public class ServiceConfig {
 
+    public static final int JOB_MODE_HYBRID = 0;
+    public static final int JOB_MODE_CONNECT = 1;
+    public static final int JOB_MODE_LISTENER = 2;
+
     private String remoteIP;
     private int remotePort = 28095;//will be define listener port
 
