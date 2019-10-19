@@ -8,6 +8,8 @@
 
 package com.mh.simplerpc.service.protocol;
 
+import com.mh.simplerpc.SimpleRPCServiceApplication;
+
 import java.util.HashMap;
 
 public class CacheToClasses {
@@ -26,7 +28,11 @@ public class CacheToClasses {
         if (matchClass != null) return matchClass;
         Class<?> forNameClass;
         synchronized (CacheToClasses.class) {
-            forNameClass = Class.forName(className);
+            if (SimpleRPCServiceApplication.isStartCommand()) {
+                forNameClass = SimpleRPCServiceApplication.getCommandClassLoader().loadClass(className);
+            } else {
+                forNameClass = Class.forName(className);
+            }
             classesMap.put(className,forNameClass);
         }
 

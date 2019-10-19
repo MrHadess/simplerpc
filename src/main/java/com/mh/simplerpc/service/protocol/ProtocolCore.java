@@ -11,6 +11,7 @@ package com.mh.simplerpc.service.protocol;
 import com.google.gson.Gson;
 import com.mh.simplerpc.ServiceConfig;
 import com.mh.simplerpc.ServiceManager;
+import com.mh.simplerpc.SimpleRPCServiceApplication;
 import com.mh.simplerpc.dto.ProviderInfo;
 import com.mh.simplerpc.exceptions.*;
 import com.mh.simplerpc.pojo.InvokeObjectInfo;
@@ -93,6 +94,9 @@ public class ProtocolCore implements ServiceProtocol.Invocation,CallRemote {
         InvokeObjectRunnable(String processID, InvokeObjectInfo invokeObjectInfo) {
             this.processID = processID;
             this.invokeObjectInfo = invokeObjectInfo;
+            if (SimpleRPCServiceApplication.isStartCommand()) {
+                Thread.currentThread().setContextClassLoader(SimpleRPCServiceApplication.getCommandClassLoader());
+            }
         }
 
         public void run() {

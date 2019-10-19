@@ -28,6 +28,17 @@ public class SimpleRPCServiceApplication {
 
     private static Logger logger = LoggerFactory.getLogger(SimpleRPCServiceApplication.class);
 
+    private static boolean startCommand = false;
+    private static ClassLoader commandClassLoader = null;
+
+    public static boolean isStartCommand() {
+        return startCommand;
+    }
+
+    public static ClassLoader getCommandClassLoader() {
+        return commandClassLoader;
+    }
+
     /*
     *
     * args is zero use default startup plan
@@ -36,6 +47,8 @@ public class SimpleRPCServiceApplication {
     *
     * */
     public static void main(String[] args) throws Exception {
+
+        startCommand = true;
 
         // first load default config file
 //        String classLocal = Thread.currentThread().getContextClassLoader().getResource("/").getFile();
@@ -47,9 +60,8 @@ public class SimpleRPCServiceApplication {
         File classFolder = new File(classLocal + File.separator);
 //        URL[] urls = new URL[]{classFolder.toURI().toURL()};
 //        Thread.currentThread().setContextClassLoader(new URLClassLoader(urls));
-        Thread.currentThread().setContextClassLoader(
-                new URLClassLoader(classPathToGroup(classFolder))
-        );
+        commandClassLoader = new URLClassLoader(classPathToGroup(classFolder));
+        Thread.currentThread().setContextClassLoader(commandClassLoader);
 
 //        File file = new File(classLocal + File.separator + "simple-rpc.xml");
 

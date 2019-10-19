@@ -182,7 +182,12 @@ public class RegistryLinkStartup2 implements AuthStateListener {
 
         public void operationComplete(ChannelFuture channelFuture) throws Exception {
             if (channelFuture.isSuccess()) {
-                new Thread(new HandShakerFirstAction(channelFuture.channel().id().asLongText())).start();
+                HandShakerFirstAction handShakerFirstAction = new HandShakerFirstAction(
+                        channelFuture.channel().id().asLongText(),
+                        TryConnectListener.this
+                );
+                new Thread(handShakerFirstAction).start();
+//                new Thread(new HandShakerFirstAction(channelFuture.channel().id().asLongText())).start();
 //                channelFuture.channel().closeFuture().sync();
                 channelFuture.channel().closeFuture();
                 return;
@@ -224,12 +229,14 @@ public class RegistryLinkStartup2 implements AuthStateListener {
 
     class HandShakerFirstAction implements Runnable {
 
-        private static final int WeakTime = 1000 * 60 * 2;// Max wait time 2min
+        private static final int WeakTime = 1000 * 60 * 1;// Max wait time 1min
         private static final int WeakNum = WeakTime / 10;
         private String channelID;
+        private ChannelFutureListener reconnectListener;
 
-        public HandShakerFirstAction(String channelID) {
+        public HandShakerFirstAction(String channelID,ChannelFutureListener reconnectListener) {
             this.channelID = channelID;
+            this.reconnectListener = reconnectListener;
         }
 
         public void run() {
@@ -263,9 +270,14 @@ public class RegistryLinkStartup2 implements AuthStateListener {
 //
 //            }
             if (waitNum >= WeakNum){
-                logger.info("disconnect ...");
+                logger.info("Hand shaker fail -- disconnect ...");
 //                ctx.close();//握手超时 断开连接
                 ctx.disconnect();
+                scheduledExecutorService.schedule(new Runnable() {
+                    public void run() {
+                        startLink(reconnectListener);
+                    }
+                },10,TimeUnit.SECONDS);
                 return;
             }
 
