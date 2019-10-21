@@ -51,7 +51,7 @@ public class WebSocketChannelInitializer extends ChannelInitializer<SocketChanne
 
         // intercept connect success but link unchanged to websocket agreement communication (check function)
         // client will be 10sec heartbeat.read time cut connect timeout is 15sec,else 'write' 'all' will be 5min close connect
-        pipeline.addLast("IdleStateHandler",new IdleStateHandler(20,20,0));
+        pipeline.addLast("IdleStateHandler",new IdleStateHandler(0,20,0));
 
         pipeline.addLast("HttpServerCodec", new HttpClientCodec());
         pipeline.addLast("ChunkedWriteHandler", new ChunkedWriteHandler());
