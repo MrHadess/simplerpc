@@ -55,9 +55,9 @@ public class ProcessHandler implements ChannelReadListener<AcceptInfo>,ServicePr
     }
 
     public boolean tryRecoveryContext(String channelID) {
-        serInvocation.updateIsConnectState(false);
         if (channelHandlerContext == null) return false;
         if (channelHandlerContext.channel().id().asLongText().equals(channelID)) {
+            serInvocation.updateIsConnectState(false);
             // recovery resource
             channelHandlerContext = null;
             return true;

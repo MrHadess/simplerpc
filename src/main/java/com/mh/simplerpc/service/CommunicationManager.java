@@ -106,6 +106,7 @@ public class CommunicationManager {
         }
 
         public void disconnect(String channelID) {
+            if (connectState == 0) return;
             if (processHandler.tryRecoveryContext(channelID)) {
                 connectState = 0;
             }
