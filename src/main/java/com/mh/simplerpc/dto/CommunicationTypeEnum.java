@@ -11,6 +11,7 @@ package com.mh.simplerpc.dto;
 
 public enum CommunicationTypeEnum {
 
+    StartAuthConnection,
     ClientAuth,
     AuthResult,
     ConsumerServices,//消费的服务

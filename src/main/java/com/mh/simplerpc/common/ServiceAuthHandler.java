@@ -17,12 +17,14 @@ import com.mh.simplerpc.dto.CommunicationTypeEnum;
 import com.mh.simplerpc.service.CommunicationManager;
 import com.mh.simplerpc.service.ServiceControl;
 import com.mh.simplerpc.service.ServiceMessage;
+import com.mh.simplerpc.util.CheckCode;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.websocketx.PingWebSocketFrame;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.InetSocketAddress;
+import java.util.HashMap;
 import java.util.HashSet;
 
 public class ServiceAuthHandler implements ChannelReadListener<AcceptInfo>,ConnectionsToContext.ChannelConnectionStateListener,ServiceControl {
@@ -36,6 +38,7 @@ public class ServiceAuthHandler implements ChannelReadListener<AcceptInfo>,Conne
 
     private ChannelReadListener<AcceptInfo> entrustChannelReadListener;
 
+    private HashMap<String,String> clientAuthCodeMap = new HashMap<String, String>();// <channelID,authCode>
     private HashSet<String> authConnectID = new HashSet<String>();
 
     private int serviceType = -1;// 0 client,1 server
@@ -83,6 +86,9 @@ public class ServiceAuthHandler implements ChannelReadListener<AcceptInfo>,Conne
         logger.debug("accept data");
         if (acceptInfo.getType() == null) return;
         switch (acceptInfo.getType()) {
+            case StartAuthConnection:
+                TrySendAuthCodeForClient(channelID);
+                break;
             case AuthResult:
             case ClientAuth:
                 switch (serviceType) {
@@ -106,8 +112,28 @@ public class ServiceAuthHandler implements ChannelReadListener<AcceptInfo>,Conne
         }
     }
 
+    private void TrySendAuthCodeForClient(String channelID) {
+        ChannelHandlerContext channelHandlerContext = connectionsToContext.getChannelHandlerContext(channelID);
+        String checkCode = CheckCode.createCode();
+        clientAuthCodeMap.put(channelID,checkCode);
+
+        ClientAuthInfo clientAuthInfo = new ClientAuthInfo();
+        clientAuthInfo.setAuthCode(checkCode);
+
+        AcceptInfo sendAcceptInfo = new AcceptInfo();
+        sendAcceptInfo.setType(CommunicationTypeEnum.ClientAuth);
+        sendAcceptInfo.setData(clientAuthInfo);
+        channelHandlerContext.channel().writeAndFlush(sendAcceptInfo);
+    }
+
     private void startClientAuthJob(final String channelID, AcceptInfo acceptInfo) {
         logger.debug("startClientAuthJob",acceptInfo);
+
+        if (acceptInfo.getType() != CommunicationTypeEnum.ClientAuth) {
+            ClientAuthInfo serClientAuthInfo = ServiceManager.getGson().fromJson(acceptInfo.getData(),ClientAuthInfo.class);
+            serClientAuthInfo.getAuthCode();
+        }
+
         if (acceptInfo.getType() != CommunicationTypeEnum.AuthResult) return;
         AuthResult authResult = ServiceManager.getGson().fromJson(acceptInfo.getData(),AuthResult.class);
         if (!authResult.isAuthSuccess()) {
@@ -203,6 +229,7 @@ public class ServiceAuthHandler implements ChannelReadListener<AcceptInfo>,Conne
             );
         }
 
+        clientAuthCodeMap.remove(channelID);
         authConnectID.remove(channelID);
         serviceMessage.disconnect(channelID);
 

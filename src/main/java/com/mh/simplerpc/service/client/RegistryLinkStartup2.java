@@ -12,7 +12,6 @@ import com.mh.simplerpc.common.AuthStateListener;
 import com.mh.simplerpc.common.ConnectionsToContext;
 import com.mh.simplerpc.common.ServiceAuthHandler;
 import com.mh.simplerpc.dto.AcceptInfo;
-import com.mh.simplerpc.dto.ClientAuthInfo;
 import com.mh.simplerpc.dto.CommunicationTypeEnum;
 import com.mh.simplerpc.service.ServiceMessage;
 import io.netty.bootstrap.Bootstrap;
@@ -91,12 +90,8 @@ public class RegistryLinkStartup2 implements AuthStateListener {
                 return;
             }
 
-            ClientAuthInfo clientAuthInfo = new ClientAuthInfo();
-            clientAuthInfo.setAuthCode(authCode);
-
             AcceptInfo sendAcceptInfo = new AcceptInfo();
-            sendAcceptInfo.setType(CommunicationTypeEnum.ClientAuth);
-            sendAcceptInfo.setData(clientAuthInfo);
+            sendAcceptInfo.setType(CommunicationTypeEnum.StartAuthConnection);
 
             channelHandlerContext.channel().writeAndFlush(sendAcceptInfo);
         }
