@@ -14,8 +14,12 @@ import com.mh.simplerpc.service.CommunicationManager;
 import com.mh.simplerpc.service.ConfigCheck;
 import com.mh.simplerpc.service.ProcessHandler;
 import com.mh.simplerpc.service.protocol.ProtocolCore;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class ServiceManager {
+
+    private static Logger logger = LoggerFactory.getLogger(ServiceManager.class);
 
     // full share use to json ser
     private static Gson gson = new Gson();
@@ -30,6 +34,7 @@ public class ServiceManager {
     private ProtocolCore protocolCore;
 
     public void startup() {
+        logger.info("SimpleRPC startup (version:1.0.7)");
         communicationManager.startup();
 
 

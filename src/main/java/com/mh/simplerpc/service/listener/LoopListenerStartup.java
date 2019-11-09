@@ -49,12 +49,12 @@ public class LoopListenerStartup implements ServiceControl {
 //        this.channelReadListener = channelReadListener;
 //    }
 
-    public LoopListenerStartup(int listenerPort,ServiceMessage serviceMessage) {
+    public LoopListenerStartup(int listenerPort,String oauthCode,ServiceMessage serviceMessage) {
         this.listenerPort = listenerPort;
 
         this.connectionsToContext = new ConnectionsToContext();
 
-        serviceAuthHandler = new ServiceAuthHandler(false,serviceMessage,connectionsToContext);
+        serviceAuthHandler = new ServiceAuthHandler(false,oauthCode,serviceMessage,connectionsToContext);
         connectionsToContext.adapterLinked.addLast(serviceAuthHandler);
     }
 

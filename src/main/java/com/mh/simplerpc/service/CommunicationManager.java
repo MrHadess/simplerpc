@@ -9,10 +9,6 @@
 package com.mh.simplerpc.service;
 
 import com.mh.simplerpc.ServiceConfig;
-import com.mh.simplerpc.common.ChannelReadListener;
-import com.mh.simplerpc.common.ConnectionsToContext;
-import com.mh.simplerpc.dto.AcceptInfo;
-import com.mh.simplerpc.service.client.RegistryLinkStartup;
 import com.mh.simplerpc.service.client.RegistryLinkStartup2;
 import com.mh.simplerpc.service.listener.LoopListenerStartup;
 import io.netty.channel.ChannelHandlerContext;
@@ -54,7 +50,7 @@ public class CommunicationManager {
 
         if (jobMode == 0 || jobMode == 1) {
             if (loopListenerStartup == null) {
-                loopListenerStartup = new LoopListenerStartup(port, serviceMessage);
+                loopListenerStartup = new LoopListenerStartup(port,serviceConfig.getOAuthCode(),serviceMessage);
             }
             runGroupService.execute(new Runnable() {
                 public void run() {
@@ -69,6 +65,7 @@ public class CommunicationManager {
                 registryLinkStartup = new RegistryLinkStartup2(
                         remoteIP,
                         port,
+                        serviceConfig.getOAuthCode(),
                         serviceMessage,
                         serviceConfig.getTryConnectNum(),
                         serviceConfig.getTryRecoveryConnectNum()

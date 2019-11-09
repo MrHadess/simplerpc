@@ -12,6 +12,7 @@ import com.mh.simplerpc.common.AuthStateListener;
 import com.mh.simplerpc.common.ConnectionsToContext;
 import com.mh.simplerpc.common.ServiceAuthHandler;
 import com.mh.simplerpc.dto.AcceptInfo;
+import com.mh.simplerpc.dto.ClientAuthInfo;
 import com.mh.simplerpc.dto.CommunicationTypeEnum;
 import com.mh.simplerpc.service.ServiceMessage;
 import io.netty.bootstrap.Bootstrap;
@@ -36,6 +37,7 @@ public class RegistryLinkStartup2 implements AuthStateListener {
 
     private String accessIpAdder;
     private int accessPort;
+    private String authCode;
     private ServiceMessage serviceMessage;
     private int tryConnectNum;
     private int tryRecoveryConnectNum;
@@ -44,14 +46,22 @@ public class RegistryLinkStartup2 implements AuthStateListener {
     private static Logger logger = LoggerFactory.getLogger(RegistryLinkStartup2.class);
 
     // TODO simple this code
-    public RegistryLinkStartup2(String accessIpAdder, int accessPort, ServiceMessage serviceMessage,int tryConnectNum,int tryRecoveryConnectNum) {
+    public RegistryLinkStartup2(
+            String accessIpAdder,
+            int accessPort,
+            String authCode,
+            ServiceMessage serviceMessage,
+            int tryConnectNum,
+            int tryRecoveryConnectNum
+    ) {
         this.accessIpAdder = accessIpAdder;
         this.accessPort = accessPort;
+        this.authCode = authCode;
         this.serviceMessage = serviceMessage;
         this.tryConnectNum = tryConnectNum;
         this.tryRecoveryConnectNum = tryRecoveryConnectNum;
 //        serviceAuthHandler = new ServiceAuthHandler(true,serviceMessage,connectionsToContext);
-        serviceAuthHandler = new ServiceAuthHandler(true,this,serviceMessage,connectionsToContext);
+        serviceAuthHandler = new ServiceAuthHandler(true,authCode,this,serviceMessage,connectionsToContext);
         connectionsToContext.adapterLinked.addLast(serviceAuthHandler);
         connectionsToContext.adapterLinked.addLast(new ConnectionsToContext.ChannelConnectionStateListener() {
             public void disconnect(String channelID) {
@@ -80,8 +90,14 @@ public class RegistryLinkStartup2 implements AuthStateListener {
                 logger.error(String.format("Client shaker success,after get context unable(id:%s)",channelID));
                 return;
             }
+
+            ClientAuthInfo clientAuthInfo = new ClientAuthInfo();
+            clientAuthInfo.setAuthCode(authCode);
+
             AcceptInfo sendAcceptInfo = new AcceptInfo();
             sendAcceptInfo.setType(CommunicationTypeEnum.ClientAuth);
+            sendAcceptInfo.setData(clientAuthInfo);
+
             channelHandlerContext.channel().writeAndFlush(sendAcceptInfo);
         }
     };
@@ -285,7 +301,7 @@ public class RegistryLinkStartup2 implements AuthStateListener {
                 handShakerStateListener.success(channelID);
             }
 
-            System.out.println(String.format("ClientSendMSGSuccess:%s,%s", "ClientHandShakerSuccess",waitNum*10));
+            logger.info(String.format("Client send msg success:%s,%s", "ClientHandShakerSuccess",waitNum*10));
         }
     }
 

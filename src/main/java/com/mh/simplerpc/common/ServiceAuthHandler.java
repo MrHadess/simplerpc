@@ -8,8 +8,13 @@
 
 package com.mh.simplerpc.common;
 
+import com.google.gson.stream.JsonToken;
+import com.mh.simplerpc.ServiceManager;
 import com.mh.simplerpc.dto.AcceptInfo;
+import com.mh.simplerpc.dto.AuthResult;
+import com.mh.simplerpc.dto.ClientAuthInfo;
 import com.mh.simplerpc.dto.CommunicationTypeEnum;
+import com.mh.simplerpc.service.CommunicationManager;
 import com.mh.simplerpc.service.ServiceControl;
 import com.mh.simplerpc.service.ServiceMessage;
 import io.netty.channel.ChannelHandlerContext;
@@ -24,6 +29,7 @@ public class ServiceAuthHandler implements ChannelReadListener<AcceptInfo>,Conne
 
     private static Logger logger = LoggerFactory.getLogger(ServiceAuthHandler.class);
 
+    private String authCode;
     private ConnectionsToContext connectionsToContext;
     private AuthStateListener authStateListener;
     private ServiceMessage serviceMessage;
@@ -33,27 +39,41 @@ public class ServiceAuthHandler implements ChannelReadListener<AcceptInfo>,Conne
     private HashSet<String> authConnectID = new HashSet<String>();
 
     private int serviceType = -1;// 0 client,1 server
-
+    private static final int SERVICE_TYPE_CLIENT = 0;
+    private static final int SERVICE_TYPE_SERVER = 1;
 
     // TODO simple this code
-    public ServiceAuthHandler(boolean isClient,AuthStateListener authStateListener,ServiceMessage serviceMessage, ConnectionsToContext connectionsToContext) {
+    public ServiceAuthHandler(
+            boolean isClient,
+            String authCode,
+            AuthStateListener authStateListener,
+            ServiceMessage serviceMessage,
+            ConnectionsToContext connectionsToContext
+    ) {
         if (isClient) {
-            serviceType = 0;
+            serviceType = SERVICE_TYPE_CLIENT;
         } else {
-            serviceType = 1;
+            serviceType = SERVICE_TYPE_SERVER;
         }
+        this.authCode = authCode;
         this.authStateListener = authStateListener;
         this.serviceMessage = serviceMessage;
         this.connectionsToContext = connectionsToContext;
         this.entrustChannelReadListener = defaultEntrustChannelReadListener;
     }
 
-    public ServiceAuthHandler(boolean isClient,ServiceMessage serviceMessage, ConnectionsToContext connectionsToContext) {
+    public ServiceAuthHandler(
+            boolean isClient,
+            String authCode,
+            ServiceMessage serviceMessage,
+            ConnectionsToContext connectionsToContext
+    ) {
         if (isClient) {
-            serviceType = 0;
+            serviceType = SERVICE_TYPE_CLIENT;
         } else {
-            serviceType = 1;
+            serviceType = SERVICE_TYPE_SERVER;
         }
+        this.authCode = authCode;
         this.serviceMessage = serviceMessage;
         this.connectionsToContext = connectionsToContext;
         this.entrustChannelReadListener = defaultEntrustChannelReadListener;
@@ -66,10 +86,10 @@ public class ServiceAuthHandler implements ChannelReadListener<AcceptInfo>,Conne
             case AuthResult:
             case ClientAuth:
                 switch (serviceType) {
-                    case 0:
+                    case SERVICE_TYPE_CLIENT:
                         startClientAuthJob(channelID,acceptInfo);
                         break;
-                    case 1:
+                    case SERVICE_TYPE_SERVER:
                         startServerAuthJob(channelID,acceptInfo);
                         break;
                 }
@@ -89,6 +109,11 @@ public class ServiceAuthHandler implements ChannelReadListener<AcceptInfo>,Conne
     private void startClientAuthJob(final String channelID, AcceptInfo acceptInfo) {
         logger.debug("startClientAuthJob",acceptInfo);
         if (acceptInfo.getType() != CommunicationTypeEnum.AuthResult) return;
+        AuthResult authResult = ServiceManager.getGson().fromJson(acceptInfo.getData(),AuthResult.class);
+        if (!authResult.isAuthSuccess()) {
+            logger.info(String.format("Auth fail for client --channelID:%s",channelID));
+            return;
+        }
         // auth success then do connect success
         authConnectID.add(channelID);
         ChannelHandlerContext channelHandlerContext = connectionsToContext.getChannelHandlerContext(channelID);
@@ -115,12 +140,31 @@ public class ServiceAuthHandler implements ChannelReadListener<AcceptInfo>,Conne
 
     private void startServerAuthJob(String channelID, AcceptInfo acceptInfo) {
         if (acceptInfo.getType() != CommunicationTypeEnum.ClientAuth) return;
+
+        ChannelHandlerContext channelHandlerContext = connectionsToContext.getChannelHandlerContext(channelID);
+        AcceptInfo sendAcceptInfo = new AcceptInfo();
+        AuthResult authResult = new AuthResult();
+
+        ClientAuthInfo clientAuthInfo = ServiceManager.getGson().fromJson(acceptInfo.getData(),ClientAuthInfo.class);
+        if (!authCode.equals(clientAuthInfo.getAuthCode())) {
+            logger.info(String.format("Auth fail for client --channelID:%s",channelID));
+
+            authResult.setAuthSuccess(false);
+
+            sendAcceptInfo.setType(CommunicationTypeEnum.AuthResult);
+            sendAcceptInfo.setData(authResult);
+
+            channelHandlerContext.channel().writeAndFlush(sendAcceptInfo);
+            channelHandlerContext.channel().close();
+            return;
+        }
         // auth success then do connect success
         authConnectID.add(channelID);
-        ChannelHandlerContext channelHandlerContext = connectionsToContext.getChannelHandlerContext(channelID);
 
-        AcceptInfo sendAcceptInfo = new AcceptInfo();
+        authResult.setAuthSuccess(true);
+
         sendAcceptInfo.setType(CommunicationTypeEnum.AuthResult);
+        sendAcceptInfo.setData(authResult);
         channelHandlerContext.channel().writeAndFlush(sendAcceptInfo);
 
         boolean connState = serviceMessage.connectSuccess(this,channelHandlerContext);
@@ -165,7 +209,7 @@ public class ServiceAuthHandler implements ChannelReadListener<AcceptInfo>,Conne
     }
 
     public void connect(String channelID) {
-        if (serviceType == 1) {
+        if (serviceType == SERVICE_TYPE_SERVER) {
             logger.info("has new client connect",channelID);
         }
     }
