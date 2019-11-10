@@ -11,7 +11,8 @@ package com.mh.simplerpc.dto;
 
 public enum CommunicationTypeEnum {
 
-    StartAuthConnection,
+    StartAuthConnection,// Request server response
+    AuthCheckCode,// Server response need sign check code
     ClientAuth,
     AuthResult,
     ConsumerServices,//消费的服务
