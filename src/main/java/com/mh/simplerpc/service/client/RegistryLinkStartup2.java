@@ -36,7 +36,6 @@ public class RegistryLinkStartup2 implements AuthStateListener {
 
     private String accessIpAdder;
     private int accessPort;
-    private String authCode;
     private ServiceMessage serviceMessage;
     private int tryConnectNum;
     private int tryRecoveryConnectNum;
@@ -55,11 +54,9 @@ public class RegistryLinkStartup2 implements AuthStateListener {
     ) {
         this.accessIpAdder = accessIpAdder;
         this.accessPort = accessPort;
-        this.authCode = authCode;
         this.serviceMessage = serviceMessage;
         this.tryConnectNum = tryConnectNum;
         this.tryRecoveryConnectNum = tryRecoveryConnectNum;
-//        serviceAuthHandler = new ServiceAuthHandler(true,serviceMessage,connectionsToContext);
         serviceAuthHandler = new ServiceAuthHandler(true,authCode,this,serviceMessage,connectionsToContext);
         connectionsToContext.adapterLinked.addLast(serviceAuthHandler);
         connectionsToContext.adapterLinked.addLast(new ConnectionsToContext.ChannelConnectionStateListener() {

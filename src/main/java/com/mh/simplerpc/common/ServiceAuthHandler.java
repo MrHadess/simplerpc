@@ -87,33 +87,25 @@ public class ServiceAuthHandler implements ChannelReadListener<AcceptInfo>,Conne
         if (acceptInfo.getType() == null) return;
         switch (acceptInfo.getType()) {
             case StartAuthConnection:
-                if (serviceType == SERVICE_TYPE_CLIENT) {
+                if (serviceType == SERVICE_TYPE_SERVER) {
                     TrySendAuthCodeForClient(channelID);
                 }
                 break;
             case AuthCheckCode:
-                if (serviceType == SERVICE_TYPE_SERVER){
-                    startClientAuthJob(channelID,acceptInfo);
+                if (serviceType == SERVICE_TYPE_CLIENT) {
+                    clientSignAuthCode(channelID,acceptInfo);
                 }
+                break;
             case AuthResult:
-                if (serviceType == SERVICE_TYPE_CLIENT){
+                if (serviceType == SERVICE_TYPE_CLIENT) {
                     startClientAuthJob(channelID,acceptInfo);
                 }
                 break;
             case ClientAuth:
-                if (serviceType == SERVICE_TYPE_SERVER){
+                if (serviceType == SERVICE_TYPE_SERVER) {
                     startServerAuthJob(channelID,acceptInfo);
                 }
                 break;
-//                switch (serviceType) {
-//                    case SERVICE_TYPE_CLIENT:
-//                        startClientAuthJob(channelID,acceptInfo);
-//                        break;
-//                    case SERVICE_TYPE_SERVER:
-//                        startServerAuthJob(channelID,acceptInfo);
-//                        break;
-//                }
-//                break;
             default:
                 if (!authConnectID.contains(channelID)) {
                     defaultEntrustChannelReadListener.channelOnRead(channelID,acceptInfo);
@@ -139,26 +131,27 @@ public class ServiceAuthHandler implements ChannelReadListener<AcceptInfo>,Conne
         channelHandlerContext.channel().writeAndFlush(sendAcceptInfo);
     }
 
+    private void clientSignAuthCode(final String channelID, AcceptInfo acceptInfo) {
+        logger.debug("startClientAuthJob", acceptInfo);
+        ChannelHandlerContext channelHandlerContext = connectionsToContext.getChannelHandlerContext(channelID);
+
+        ClientAuthInfo serClientAuthInfo = ServiceManager.getGson().fromJson(acceptInfo.getData(), ClientAuthInfo.class);
+        String signData = serClientAuthInfo.getAuthCode();
+        signData = CheckCode.signData(signData, authCode);
+        ClientAuthInfo clientAuthInfo = new ClientAuthInfo();
+        clientAuthInfo.setAuthCode(signData);
+
+        AcceptInfo sendAcceptInfo = new AcceptInfo();
+        sendAcceptInfo.setType(CommunicationTypeEnum.ClientAuth);
+        sendAcceptInfo.setData(clientAuthInfo);
+
+        channelHandlerContext.channel().writeAndFlush(sendAcceptInfo);
+    }
+
     private void startClientAuthJob(final String channelID, AcceptInfo acceptInfo) {
         logger.debug("startClientAuthJob",acceptInfo);
         ChannelHandlerContext channelHandlerContext = connectionsToContext.getChannelHandlerContext(channelID);
 
-        if (acceptInfo.getType() != CommunicationTypeEnum.AuthCheckCode) {
-            ClientAuthInfo serClientAuthInfo = ServiceManager.getGson().fromJson(acceptInfo.getData(),ClientAuthInfo.class);
-            String signData = serClientAuthInfo.getAuthCode();
-            signData = CheckCode.signData(signData,authCode);
-            ClientAuthInfo clientAuthInfo = new ClientAuthInfo();
-            clientAuthInfo.setAuthCode(signData);
-
-            AcceptInfo sendAcceptInfo = new AcceptInfo();
-            acceptInfo.setType(CommunicationTypeEnum.ClientAuth);
-            acceptInfo.setData(clientAuthInfo);
-
-            channelHandlerContext.channel().writeAndFlush(sendAcceptInfo);
-            return;
-        }
-
-        if (acceptInfo.getType() != CommunicationTypeEnum.AuthResult) return;
         AuthResult authResult = ServiceManager.getGson().fromJson(acceptInfo.getData(),AuthResult.class);
         if (!authResult.isAuthSuccess()) {
             logger.info(String.format("Auth fail for client --channelID:%s",channelID));
@@ -167,6 +160,7 @@ public class ServiceAuthHandler implements ChannelReadListener<AcceptInfo>,Conne
         // auth success then do connect success
         authConnectID.add(channelID);
         boolean connectState = serviceMessage.connectSuccess(this,channelHandlerContext);
+
         // start ping frame
         new Thread(new Runnable() {
             public void run() {
