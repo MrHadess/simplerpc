@@ -20,7 +20,6 @@ public class CommunicationManager {
 
     private ServiceConfig serviceConfig;
 
-    // 0 unconnected,1 connect success
     private int connectState = 0;
     private ProcessHandler processHandler;
 
@@ -48,7 +47,7 @@ public class CommunicationManager {
 
         /// TODO bug fix if jobMode==0 start loop before will be block thread
 
-        if (jobMode == 0 || jobMode == 1) {
+        if (jobMode == ServiceConfig.JOB_MODE_HYBRID || jobMode == ServiceConfig.JOB_MODE_LISTENER) {
             if (loopListenerStartup == null) {
                 loopListenerStartup = new LoopListenerStartup(port,serviceConfig.getOAuthCode(),serviceMessage);
             }
@@ -59,7 +58,7 @@ public class CommunicationManager {
             });
         }
 
-        if (jobMode == 0 || jobMode == 2) {
+        if (jobMode == ServiceConfig.JOB_MODE_HYBRID || jobMode == ServiceConfig.JOB_MODE_CONNECT) {
             if (registryLinkStartup == null) {
 //                registryLinkStartup = new RegistryLinkStartup(serviceMessage);
                 registryLinkStartup = new RegistryLinkStartup2(
