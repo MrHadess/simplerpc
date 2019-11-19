@@ -19,15 +19,20 @@ import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpObjectAggregator;
 import io.netty.handler.codec.http.websocketx.WebSocketClientProtocolHandler;
 import io.netty.handler.codec.http.websocketx.WebSocketVersion;
+import io.netty.handler.ssl.SslContext;
+import io.netty.handler.ssl.SslHandler;
 import io.netty.handler.stream.ChunkedWriteHandler;
 import io.netty.handler.timeout.IdleStateHandler;
 
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLEngine;
 import java.net.URI;
 
 
 public class WebSocketChannelInitializer extends ChannelInitializer<SocketChannel> {
 
     private URI connectURI;
+    private SSLEngine sslEngine;
     private ChannelReadListener channelReadListener;
     private Class<?> serializableClass;
     private ConnectionsToContext connectionsToContext;
@@ -37,8 +42,15 @@ public class WebSocketChannelInitializer extends ChannelInitializer<SocketChanne
 //        this.serializableClass = serializableClass;
 //    }
 
-    public WebSocketChannelInitializer(URI connectURI, ChannelReadListener channelReadListener, Class<?> serializableClass, ConnectionsToContext connectionsToContext) {
+    public WebSocketChannelInitializer(
+            URI connectURI,
+            SSLEngine sslEngine,
+            ChannelReadListener channelReadListener,
+            Class<?> serializableClass,
+            ConnectionsToContext connectionsToContext
+    ) {
         this.connectURI = connectURI;
+        this.sslEngine = sslEngine;
         this.channelReadListener = channelReadListener;
         this.serializableClass = serializableClass;
         this.connectionsToContext = connectionsToContext;
@@ -46,6 +58,10 @@ public class WebSocketChannelInitializer extends ChannelInitializer<SocketChanne
 
     protected void initChannel(SocketChannel socketChannel) throws Exception {
         ChannelPipeline pipeline = socketChannel.pipeline();
+
+        if (sslEngine != null) {
+            pipeline.addLast("SslHandler",new SslHandler(sslEngine));
+        }
 
 //        pipeline.addFirst("LogHandler",new LoggingHandler(LogLevel.INFO));
 

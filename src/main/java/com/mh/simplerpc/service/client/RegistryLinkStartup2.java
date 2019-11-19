@@ -10,7 +10,9 @@ package com.mh.simplerpc.service.client;
 
 import com.mh.simplerpc.common.AuthStateListener;
 import com.mh.simplerpc.common.ConnectionsToContext;
+import com.mh.simplerpc.common.LoadSSLEngine;
 import com.mh.simplerpc.common.ServiceAuthHandler;
+import com.mh.simplerpc.config.EncryptConnectInfo;
 import com.mh.simplerpc.dto.AcceptInfo;
 import com.mh.simplerpc.dto.CommunicationTypeEnum;
 import com.mh.simplerpc.service.ServiceMessage;
@@ -23,6 +25,8 @@ import io.netty.handler.codec.http.websocketx.WebSocketClientProtocolHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.net.ssl.SSLEngine;
+import java.io.File;
 import java.net.InetSocketAddress;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -39,25 +43,26 @@ public class RegistryLinkStartup2 implements AuthStateListener {
     private ServiceMessage serviceMessage;
     private int tryConnectNum;
     private int tryRecoveryConnectNum;
+    private SSLEngine sslEngine;
     private ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(100);
 
     private static Logger logger = LoggerFactory.getLogger(RegistryLinkStartup2.class);
 
-    // TODO simple this code
-    public RegistryLinkStartup2(
-            String accessIpAdder,
-            int accessPort,
-            String authCode,
-            ServiceMessage serviceMessage,
-            int tryConnectNum,
-            int tryRecoveryConnectNum
-    ) {
-        this.accessIpAdder = accessIpAdder;
-        this.accessPort = accessPort;
-        this.serviceMessage = serviceMessage;
-        this.tryConnectNum = tryConnectNum;
-        this.tryRecoveryConnectNum = tryRecoveryConnectNum;
-        serviceAuthHandler = new ServiceAuthHandler(true,authCode,this,serviceMessage,connectionsToContext);
+    private RegistryLinkStartup2(Builder builder) {
+        this.accessIpAdder = builder.accessIpAdder;
+        this.accessPort = builder.accessPort;
+        this.serviceMessage = builder.serviceMessage;
+        this.tryConnectNum = builder.tryConnectNum;
+        this.tryRecoveryConnectNum = builder.tryRecoveryConnectNum;
+        // Try load ssl
+        if (builder.encryptConnectInfo != null) {
+            sslEngine = LoadSSLEngine.loadToClient(
+                    builder.encryptConnectInfo.getKeyPath(),
+                    builder.encryptConnectInfo.getKeyStorePassword(),
+                    builder.encryptConnectInfo.getKeyPassword()
+            );
+        }
+        serviceAuthHandler = new ServiceAuthHandler(true,builder.authCode,this,serviceMessage,connectionsToContext);
         connectionsToContext.adapterLinked.addLast(serviceAuthHandler);
         connectionsToContext.adapterLinked.addLast(new ConnectionsToContext.ChannelConnectionStateListener() {
             public void disconnect(String channelID) {
@@ -123,13 +128,18 @@ public class RegistryLinkStartup2 implements AuthStateListener {
         group = new NioEventLoopGroup();
         URI connectURI = null;
         try {
-            connectURI = new URI(String.format("ws://%s:%s/",accessIpAdder,accessPort));
+            if (sslEngine == null) {
+                connectURI = new URI(String.format("ws://%s:%s/",accessIpAdder,accessPort));
+            } else {
+                connectURI = new URI(String.format("wss://%s:%s/",accessIpAdder,accessPort));
+            }
         } catch (URISyntaxException e) {
             e.printStackTrace();
         }
 
         WebSocketChannelInitializer webSocketChannelInitializer = new WebSocketChannelInitializer(
                 connectURI,
+                sslEngine,
                 serviceAuthHandler,
                 AcceptInfo.class,
                 connectionsToContext
@@ -237,8 +247,8 @@ public class RegistryLinkStartup2 implements AuthStateListener {
 
     class HandShakerFirstAction implements Runnable {
 
-        private static final int WeakTime = 1000 * 60 * 1;// Max wait time 1min
-        private static final int WeakNum = WeakTime / 10;
+        private static final int WEAK_TIME = 1000 * 60 * 1;// Max wait time 1min
+        private static final int WEAK_NUM = WEAK_TIME / 10;
         private String channelID;
         private ChannelFutureListener reconnectListener;
 
@@ -253,7 +263,7 @@ public class RegistryLinkStartup2 implements AuthStateListener {
             WebSocketClientHandshaker webSocketClientHandshaker = w.handshaker();
 
             int waitNum = 0;
-            while (!webSocketClientHandshaker.isHandshakeComplete() && waitNum < WeakNum) {
+            while (!webSocketClientHandshaker.isHandshakeComplete() && waitNum < WEAK_NUM) {
 
                 waitNum++;
                 try {
@@ -264,20 +274,7 @@ public class RegistryLinkStartup2 implements AuthStateListener {
 
             }
 
-//            while (true) {
-//                if (ctx.isRemoved()) break;
-//                if (!webSocketClientHandshaker.isHandshakeComplete() && waitNum < WeakNum) break;
-//
-//
-//                waitNum++;
-//                try {
-//                    Thread.sleep(10);
-//                } catch (InterruptedException e) {
-//                    e.printStackTrace();
-//                }
-//
-//            }
-            if (waitNum >= WeakNum){
+            if (waitNum >= WEAK_NUM){
                 logger.info("Hand shaker fail -- disconnect ...");
 //                ctx.close();//握手超时 断开连接
                 ctx.disconnect();
@@ -297,6 +294,66 @@ public class RegistryLinkStartup2 implements AuthStateListener {
         }
     }
 
+    public static class Builder {
+        private String accessIpAdder;
+        private int accessPort;
+        private ServiceMessage serviceMessage;
+        private int tryConnectNum;
+        private int tryRecoveryConnectNum;
+        private String authCode;
+        private EncryptConnectInfo encryptConnectInfo;
 
+        public Builder setAccessIpAdder(String accessIpAdder) {
+            this.accessIpAdder = accessIpAdder;
+            return this;
+        }
+
+        public Builder setAccessPort(int accessPort) {
+            this.accessPort = accessPort;
+            return this;
+        }
+
+        public Builder setServiceMessage(ServiceMessage serviceMessage) {
+            this.serviceMessage = serviceMessage;
+            return this;
+        }
+
+        public Builder setTryConnectNum(int tryConnectNum) {
+            this.tryConnectNum = tryConnectNum;
+            return this;
+        }
+
+        public Builder setTryRecoveryConnectNum(int tryRecoveryConnectNum) {
+            this.tryRecoveryConnectNum = tryRecoveryConnectNum;
+            return this;
+        }
+
+        public Builder setEncryptConnectInfo(EncryptConnectInfo encryptConnectInfo) {
+            this.encryptConnectInfo = encryptConnectInfo;
+            return this;
+        }
+
+        public Builder setAuthCode(String authCode) {
+            this.authCode = authCode;
+            return this;
+        }
+
+        public RegistryLinkStartup2 build() {
+            return new RegistryLinkStartup2(this);
+        }
+
+        @Override
+        public String toString() {
+            return "Builder{" +
+                    "accessIpAdder='" + accessIpAdder + '\'' +
+                    ", accessPort=" + accessPort +
+                    ", serviceMessage=" + serviceMessage +
+                    ", tryConnectNum=" + tryConnectNum +
+                    ", tryRecoveryConnectNum=" + tryRecoveryConnectNum +
+                    ", authCode='" + authCode + '\'' +
+                    ", encryptConnectInfo=" + encryptConnectInfo +
+                    '}';
+        }
+    }
 
 }

@@ -49,7 +49,12 @@ public class CommunicationManager {
 
         if (jobMode == ServiceConfig.JOB_MODE_HYBRID || jobMode == ServiceConfig.JOB_MODE_LISTENER) {
             if (loopListenerStartup == null) {
-                loopListenerStartup = new LoopListenerStartup(port,serviceConfig.getOAuthCode(),serviceMessage);
+                loopListenerStartup = new LoopListenerStartup(
+                        port,
+                        serviceConfig.getEncryptConnectInfo(),
+                        serviceConfig.getOAuthCode(),
+                        serviceMessage
+                );
             }
             runGroupService.execute(new Runnable() {
                 public void run() {
@@ -60,19 +65,18 @@ public class CommunicationManager {
 
         if (jobMode == ServiceConfig.JOB_MODE_HYBRID || jobMode == ServiceConfig.JOB_MODE_CONNECT) {
             if (registryLinkStartup == null) {
-//                registryLinkStartup = new RegistryLinkStartup(serviceMessage);
-                registryLinkStartup = new RegistryLinkStartup2(
-                        remoteIP,
-                        port,
-                        serviceConfig.getOAuthCode(),
-                        serviceMessage,
-                        serviceConfig.getTryConnectNum(),
-                        serviceConfig.getTryRecoveryConnectNum()
-                );
+                registryLinkStartup = new RegistryLinkStartup2.Builder()
+                        .setAccessIpAdder(remoteIP)
+                        .setAccessPort(port)
+                        .setEncryptConnectInfo(serviceConfig.getEncryptConnectInfo())
+                        .setAuthCode(serviceConfig.getOAuthCode())
+                        .setServiceMessage(serviceMessage)
+                        .setTryConnectNum(serviceConfig.getTryConnectNum())
+                        .setTryRecoveryConnectNum(serviceConfig.getTryRecoveryConnectNum())
+                        .build();
             }
             runGroupService.execute(new Runnable() {
                 public void run() {
-//                    registryLinkStartup.startLink(remoteIP, port);
                     registryLinkStartup.startLink();
                 }
             });

@@ -10,7 +10,9 @@ package com.mh.simplerpc.service.listener;
 
 import com.mh.simplerpc.common.ChannelReadListener;
 import com.mh.simplerpc.common.ConnectionsToContext;
+import com.mh.simplerpc.common.LoadSSLEngine;
 import com.mh.simplerpc.common.ServiceAuthHandler;
+import com.mh.simplerpc.config.EncryptConnectInfo;
 import com.mh.simplerpc.dto.AcceptInfo;
 import com.mh.simplerpc.service.ServiceControl;
 import com.mh.simplerpc.service.ServiceMessage;
@@ -26,6 +28,8 @@ import io.netty.util.concurrent.GenericProgressiveFutureListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.net.ssl.SSLEngine;
+
 public class LoopListenerStartup implements ServiceControl {
 
     private static Logger logger = LoggerFactory.getLogger(LoopListenerStartup.class);
@@ -34,6 +38,7 @@ public class LoopListenerStartup implements ServiceControl {
     private EventLoopGroup workerGroup = new NioEventLoopGroup();
 
     private int listenerPort;
+    private SSLEngine sslEngine;
 
     private ConnectionsToContext connectionsToContext;
 
@@ -49,8 +54,15 @@ public class LoopListenerStartup implements ServiceControl {
 //        this.channelReadListener = channelReadListener;
 //    }
 
-    public LoopListenerStartup(int listenerPort,String oauthCode,ServiceMessage serviceMessage) {
+    public LoopListenerStartup(int listenerPort, EncryptConnectInfo encryptConnectInfo, String oauthCode, ServiceMessage serviceMessage) {
         this.listenerPort = listenerPort;
+        if (encryptConnectInfo != null) {
+            sslEngine = LoadSSLEngine.loadToServer(
+                    encryptConnectInfo.getKeyPath(),
+                    encryptConnectInfo.getKeyStorePassword(),
+                    encryptConnectInfo.getKeyPassword()
+            );
+        }
 
         this.connectionsToContext = new ConnectionsToContext();
 
@@ -75,6 +87,7 @@ public class LoopListenerStartup implements ServiceControl {
 //        );
 
         WebSocketChannelInitializer webSocketChannelInitializer = new WebSocketChannelInitializer(
+                sslEngine,
                 serviceAuthHandler,
                 AcceptInfo.class,
                 connectionsToContext

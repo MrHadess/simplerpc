@@ -9,6 +9,7 @@
 package com.mh.simplerpc;
 
 import com.mh.simplerpc.config.ConsumerEntity;
+import com.mh.simplerpc.config.EncryptConnectInfo;
 import com.mh.simplerpc.config.ProviderEntity;
 import com.mh.simplerpc.exceptions.MismatchRESFormatException;
 import org.dom4j.Document;
@@ -22,6 +23,7 @@ import org.xml.sax.InputSource;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.net.URL;
 import java.util.Iterator;
 
 public class LoadConfigFile {
@@ -56,6 +58,7 @@ public class LoadConfigFile {
         ClassLoader classLoader = getClassLoader();
 
         loadCommonConfig(rootElement,serviceConfigBuilder);
+        loadSSLConnectConfig(rootElement,serviceConfigBuilder);
         loadProviderListConfig(providerListElement,serviceConfigBuilder,classLoader);
         loadConsumerListConfig(consumerListElement,serviceConfigBuilder,classLoader);
 
@@ -162,6 +165,48 @@ public class LoadConfigFile {
 
         }
 
+    }
+
+    private static void loadSSLConnectConfig(Element rootElement,ServiceConfig.Builder builder) {
+        Element sslConnectElement = rootElement.element("ssl-connect");
+        if (sslConnectElement == null) return;
+
+        Element keyPathElement = sslConnectElement.element("key-path");
+        Element keyStorePasswordElement = sslConnectElement.element("key-store-pass");
+        Element keyPasswordElement = sslConnectElement.element("key-path");
+
+        EncryptConnectInfo.Builder encryptConnectInfoBuilder = new EncryptConnectInfo.Builder();
+
+        if (keyPathElement != null) {
+            File keyPath = new File(keyPathElement.getText());
+            URL classLoaderUrl = null;
+            if (keyPath.isAbsolute()) {
+                encryptConnectInfoBuilder.setKeyPath(keyPath);
+            } else if ((classLoaderUrl = getClassLoader().getResource("")) != null) {
+                keyPath = new File(classLoaderUrl.getFile() + keyPath);
+                encryptConnectInfoBuilder.setKeyPath(keyPath);
+            } else {
+                logger.warn("Cloud not load classloader resource");
+            }
+            // Check file is exists
+            if (!keyPath.exists() || !keyPath.isFile()) {
+                logger.warn(String.format("Key path '%s' is not exists or not file (%s)",keyPathElement.getText(),keyPath));
+            }
+        } else {
+            logger.warn("SSL connect config --- key path find empty");
+        }
+
+        if (keyStorePasswordElement != null) {
+            encryptConnectInfoBuilder.setKeyStorePassword(keyStorePasswordElement.getText());
+        } else {
+            logger.warn("SSL connect config --- key store password find empty");
+        }
+
+        if (keyPasswordElement != null) {
+            encryptConnectInfoBuilder.setKeyPassword(keyPasswordElement.getText());
+        } else {
+            logger.warn("SSL connect config --- key password find empty");
+        }
     }
 
     private static ClassLoader getClassLoader() {

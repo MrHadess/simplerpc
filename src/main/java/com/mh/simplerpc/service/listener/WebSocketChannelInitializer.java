@@ -16,12 +16,16 @@ import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.codec.http.HttpObjectAggregator;
 import io.netty.handler.codec.http.HttpServerCodec;
 import io.netty.handler.codec.http.websocketx.WebSocketServerProtocolHandler;
+import io.netty.handler.ssl.SslHandler;
 import io.netty.handler.stream.ChunkedWriteHandler;
 import io.netty.handler.timeout.IdleStateHandler;
+
+import javax.net.ssl.SSLEngine;
 
 
 public class WebSocketChannelInitializer extends ChannelInitializer<SocketChannel> {
 
+    private SSLEngine sslEngine;
     private ChannelReadListener channelReadListener;
     private Class<?> serializableClass;
     private ConnectionsToContext connectionsToContext;
@@ -31,7 +35,13 @@ public class WebSocketChannelInitializer extends ChannelInitializer<SocketChanne
 //        this.serializableClass = serializableClass;
 //    }
 
-    public WebSocketChannelInitializer(ChannelReadListener channelReadListener, Class<?> serializableClass, ConnectionsToContext connectionsToContext) {
+    public WebSocketChannelInitializer(
+            SSLEngine sslEngine,
+            ChannelReadListener channelReadListener,
+            Class<?> serializableClass,
+            ConnectionsToContext connectionsToContext
+    ) {
+        this.sslEngine = sslEngine;
         this.channelReadListener = channelReadListener;
         this.serializableClass = serializableClass;
         this.connectionsToContext = connectionsToContext;
@@ -40,6 +50,10 @@ public class WebSocketChannelInitializer extends ChannelInitializer<SocketChanne
 
     protected void initChannel(SocketChannel socketChannel) throws Exception {
         ChannelPipeline pipeline = socketChannel.pipeline();
+
+        if (sslEngine != null) {
+            pipeline.addLast("SslHandler",new SslHandler(sslEngine));
+        }
 
         // client will be 10sec heartbeat.read time cut connect timeout is 15sec,else 'write' 'all' will be 5min close connect
         pipeline.addLast("IdleStateHandler",new IdleStateHandler(15,300,300));

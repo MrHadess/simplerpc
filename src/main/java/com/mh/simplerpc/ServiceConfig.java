@@ -9,6 +9,7 @@
 package com.mh.simplerpc;
 
 import com.mh.simplerpc.config.ConsumerEntity;
+import com.mh.simplerpc.config.EncryptConnectInfo;
 import com.mh.simplerpc.config.ProviderEntity;
 import com.mh.simplerpc.service.ConfigCheck;
 
@@ -37,6 +38,8 @@ public class ServiceConfig {
     private List<ProviderEntity> providerConfigList = new ArrayList<ProviderEntity>();
     private List<ConsumerEntity> consumerConfigList = new ArrayList<ConsumerEntity>();
 
+    private EncryptConnectInfo encryptConnectInfo;
+
 
     private ServiceConfig(Builder builder) {
         remoteIP = builder.remoteIP;
@@ -47,6 +50,7 @@ public class ServiceConfig {
         OAuthCode = builder.OAuthCode;
         consumerConfigList = builder.consumerConfigList;
         providerConfigList = builder.providerConfigList;
+        encryptConnectInfo = builder.encryptConnectInfo;
     }
 
 
@@ -82,6 +86,10 @@ public class ServiceConfig {
         return tryRecoveryConnectNum;
     }
 
+    public EncryptConnectInfo getEncryptConnectInfo() {
+        return encryptConnectInfo;
+    }
+
     @Override
     public String toString() {
         return "ServiceConfig{" +
@@ -93,6 +101,7 @@ public class ServiceConfig {
                 ", tryRecoveryConnectNum=" + tryRecoveryConnectNum +
                 ", providerConfigList=" + providerConfigList +
                 ", consumerConfigList=" + consumerConfigList +
+                ", encryptConnectInfo=" + encryptConnectInfo +
                 '}';
     }
 
@@ -103,16 +112,14 @@ public class ServiceConfig {
 
         private String OAuthCode = "0000-0000-0000-0000-0000";
 
-        private int jobMode = 0;// 0 all,1 provider,2 consumer
+        private int jobMode = 0;
         private int tryConnectNum = 0;
         private int tryRecoveryConnectNum = 12;// default value 12,will be 10sec to try again
 
         private List<ProviderEntity> providerConfigList = new ArrayList<ProviderEntity>();
         private List<ConsumerEntity> consumerConfigList = new ArrayList<ConsumerEntity>();
 
-//        public Builder(String remoteIP) {
-//            this.remoteIP = remoteIP;
-//        }
+        private EncryptConnectInfo encryptConnectInfo;
 
         public Builder() { }
 
@@ -131,6 +138,12 @@ public class ServiceConfig {
             return this;
         }
 
+        /**
+         * @see ServiceConfig#JOB_MODE_HYBRID
+         * @see ServiceConfig#JOB_MODE_CONNECT
+         * @see ServiceConfig#JOB_MODE_LISTENER
+         *
+         * */
         public Builder setJobMode(int jobMode) {
             this.jobMode = jobMode;
             return this;
@@ -165,6 +178,11 @@ public class ServiceConfig {
         public Builder addConsumerList(ConsumerEntity consumerEntity) {
             if (consumerConfigList == null) return this;
             this.consumerConfigList.add(consumerEntity);
+            return this;
+        }
+
+        public Builder setSSLConnectInfo(EncryptConnectInfo encryptConnectInfo) {
+            this.encryptConnectInfo = encryptConnectInfo;
             return this;
         }
 

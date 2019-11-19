@@ -110,7 +110,7 @@ public class ServiceAuthHandler implements ChannelReadListener<AcceptInfo>,Conne
     }
 
     private void TrySendAuthCodeForClient(String channelID) {
-        if (serviceType == SERVICE_TYPE_SERVER) return;
+        if (serviceType != SERVICE_TYPE_SERVER) return;
         ChannelHandlerContext channelHandlerContext = connectionsToContext.getChannelHandlerContext(channelID);
         String checkCode = CheckCode.createCode();
         clientAuthCodeMap.put(channelID,checkCode);
@@ -125,7 +125,7 @@ public class ServiceAuthHandler implements ChannelReadListener<AcceptInfo>,Conne
     }
 
     private void clientSignAuthCode(final String channelID, AcceptInfo acceptInfo) {
-        if (serviceType == SERVICE_TYPE_CLIENT) return;
+        if (serviceType != SERVICE_TYPE_CLIENT) return;
         logger.debug("startClientAuthJob", acceptInfo);
         ChannelHandlerContext channelHandlerContext = connectionsToContext.getChannelHandlerContext(channelID);
 
@@ -143,7 +143,7 @@ public class ServiceAuthHandler implements ChannelReadListener<AcceptInfo>,Conne
     }
 
     private void startClientAuthJob(final String channelID, AcceptInfo acceptInfo) {
-        if (serviceType == SERVICE_TYPE_CLIENT) return;
+        if (serviceType != SERVICE_TYPE_CLIENT) return;
         logger.debug("startClientAuthJob",acceptInfo);
         ChannelHandlerContext channelHandlerContext = connectionsToContext.getChannelHandlerContext(channelID);
 
@@ -177,7 +177,7 @@ public class ServiceAuthHandler implements ChannelReadListener<AcceptInfo>,Conne
     }
 
     private void startServerAuthJob(String channelID, AcceptInfo acceptInfo) {
-        if (serviceType == SERVICE_TYPE_SERVER) return;
+        if (serviceType != SERVICE_TYPE_SERVER) return;
         ChannelHandlerContext channelHandlerContext = connectionsToContext.getChannelHandlerContext(channelID);
         String checkCodeForClient = clientAuthCodeMap.get(channelID);
 
