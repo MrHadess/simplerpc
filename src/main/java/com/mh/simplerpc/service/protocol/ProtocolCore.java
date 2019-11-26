@@ -69,6 +69,15 @@ public class ProtocolCore implements ServiceProtocol.Invocation,CallRemote {
     }
 
     public void updateIsConnectState(boolean state) {
+        if (connectState && !state) { // In connect state,and now disconnect network
+            // remove before destroy job
+            InvokeObjectResultInfo invokeObjectInfo = new InvokeObjectResultInfo.Builder()
+                    .setException(new ConnectionDisconnectException())
+                    .build();
+            for (String processID:invokeResultMap.keySet()) {
+                cacheExecutorService.execute(new AcceptInvokeObjectResultRunnable(processID,invokeObjectInfo));
+            }
+        }
         this.connectState = state;
         remoteSupportResSet = new HashSet<String>();
     }
@@ -183,6 +192,22 @@ public class ProtocolCore implements ServiceProtocol.Invocation,CallRemote {
 //            invokeObjectInfo.notify();
 //        }
 
+    }
+
+    class AcceptInvokeObjectResultRunnable implements Runnable {
+
+        private String processID;
+        private InvokeObjectResultInfo invokeObjectResultInfo;
+
+        public AcceptInvokeObjectResultRunnable(String processID, InvokeObjectResultInfo invokeObjectResultInfo) {
+            this.processID = processID;
+            this.invokeObjectResultInfo = invokeObjectResultInfo;
+        }
+
+        @Override
+        public void run() {
+            acceptInvokeObjectResult(processID,invokeObjectResultInfo);
+        }
     }
 
     public void call(final InvokeObjectInfo invokeObjectInfo,final InvokeResult invokeResult,final Thread thread) {

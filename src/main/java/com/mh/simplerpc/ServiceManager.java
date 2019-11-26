@@ -34,7 +34,7 @@ public class ServiceManager {
     private ProtocolCore protocolCore;
 
     public void startup() {
-        logger.info("SimpleRPC startup (version:1.1.0)");
+        logger.info("SimpleRPC startup (version:1.1.1)");
         communicationManager.startup();
 
 
