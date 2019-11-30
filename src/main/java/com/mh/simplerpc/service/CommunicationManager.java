@@ -9,6 +9,7 @@
 package com.mh.simplerpc.service;
 
 import com.mh.simplerpc.ServiceConfig;
+import com.mh.simplerpc.exceptions.LoadSSLEngineException;
 import com.mh.simplerpc.service.client.RegistryLinkStartup2;
 import com.mh.simplerpc.service.listener.LoopListenerStartup;
 import io.netty.channel.ChannelHandlerContext;
@@ -40,7 +41,7 @@ public class CommunicationManager {
         this.processHandler = processHandler;
     }
 
-    public synchronized void startup() {
+    public synchronized void startup() throws LoadSSLEngineException {
         int jobMode = serviceConfig.getJobMode();
         final String remoteIP = serviceConfig.getRemoteIP();
         final int port = serviceConfig.getRemotePort();

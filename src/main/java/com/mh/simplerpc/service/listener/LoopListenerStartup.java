@@ -14,6 +14,7 @@ import com.mh.simplerpc.common.LoadSSLEngine;
 import com.mh.simplerpc.common.ServiceAuthHandler;
 import com.mh.simplerpc.config.EncryptConnectInfo;
 import com.mh.simplerpc.dto.AcceptInfo;
+import com.mh.simplerpc.exceptions.LoadSSLEngineException;
 import com.mh.simplerpc.service.ServiceControl;
 import com.mh.simplerpc.service.ServiceMessage;
 import io.netty.bootstrap.ServerBootstrap;
@@ -54,7 +55,7 @@ public class LoopListenerStartup implements ServiceControl {
 //        this.channelReadListener = channelReadListener;
 //    }
 
-    public LoopListenerStartup(int listenerPort, EncryptConnectInfo encryptConnectInfo, String oauthCode, ServiceMessage serviceMessage) {
+    public LoopListenerStartup(int listenerPort, EncryptConnectInfo encryptConnectInfo, String oauthCode, ServiceMessage serviceMessage) throws LoadSSLEngineException {
         this.listenerPort = listenerPort;
         if (encryptConnectInfo != null) {
             sslEngine = LoadSSLEngine.loadToServer(

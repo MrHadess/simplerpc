@@ -8,6 +8,7 @@
 
 package com.mh.simplerpc;
 
+import com.mh.simplerpc.exceptions.LoadSSLEngineException;
 import com.mh.simplerpc.exceptions.MismatchRESFormatException;
 import org.dom4j.DocumentException;
 import org.slf4j.Logger;
@@ -96,7 +97,7 @@ public class SimpleRPCServiceApplication {
 
     }
 
-    public static ServiceManager createService(File configFileLocal) throws DocumentException, FileNotFoundException, ClassNotFoundException, MismatchRESFormatException {
+    public static ServiceManager createService(File configFileLocal) throws DocumentException, FileNotFoundException, ClassNotFoundException, MismatchRESFormatException, LoadSSLEngineException {
         ServiceConfig serviceConfig = LoadConfigFile.loadConfigToFile(configFileLocal);
         ServiceManager serviceManager = new ServiceManager(serviceConfig);
         serviceManager.startup();

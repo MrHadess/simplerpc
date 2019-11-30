@@ -15,6 +15,7 @@ import com.mh.simplerpc.common.ServiceAuthHandler;
 import com.mh.simplerpc.config.EncryptConnectInfo;
 import com.mh.simplerpc.dto.AcceptInfo;
 import com.mh.simplerpc.dto.CommunicationTypeEnum;
+import com.mh.simplerpc.exceptions.LoadSSLEngineException;
 import com.mh.simplerpc.service.ServiceMessage;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.*;
@@ -48,7 +49,7 @@ public class RegistryLinkStartup2 implements AuthStateListener {
 
     private static Logger logger = LoggerFactory.getLogger(RegistryLinkStartup2.class);
 
-    private RegistryLinkStartup2(Builder builder) {
+    private RegistryLinkStartup2(Builder builder) throws LoadSSLEngineException {
         this.accessIpAdder = builder.accessIpAdder;
         this.accessPort = builder.accessPort;
         this.serviceMessage = builder.serviceMessage;
@@ -338,7 +339,7 @@ public class RegistryLinkStartup2 implements AuthStateListener {
             return this;
         }
 
-        public RegistryLinkStartup2 build() {
+        public RegistryLinkStartup2 build() throws LoadSSLEngineException {
             return new RegistryLinkStartup2(this);
         }
 

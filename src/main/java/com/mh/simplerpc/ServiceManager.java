@@ -9,6 +9,7 @@
 package com.mh.simplerpc;
 
 import com.google.gson.Gson;
+import com.mh.simplerpc.exceptions.LoadSSLEngineException;
 import com.mh.simplerpc.exceptions.UnknownResourceException;
 import com.mh.simplerpc.service.CommunicationManager;
 import com.mh.simplerpc.service.ConfigCheck;
@@ -33,8 +34,8 @@ public class ServiceManager {
     private ProcessHandler processHandler;
     private ProtocolCore protocolCore;
 
-    public void startup() {
-        logger.info("SimpleRPC startup (version:1.1.1)");
+    public void startup() throws LoadSSLEngineException {
+        logger.info("SimpleRPC startup (version:1.1.1.2)");
         communicationManager.startup();
 
 
