@@ -16,4 +16,6 @@ public interface AuthStateListener {
 
     void authSuccessDisconnect(ChannelHandlerContext channelHandlerContext,InetSocketAddress localAddress,InetSocketAddress remoteAddress);
 
+    void connectDisconnectAndIncompleteAuth(ChannelHandlerContext channelHandlerContext,InetSocketAddress localAddress,InetSocketAddress remoteAddress);
+
 }

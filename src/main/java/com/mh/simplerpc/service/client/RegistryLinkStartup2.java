@@ -121,6 +121,17 @@ public class RegistryLinkStartup2 implements AuthStateListener {
         },10,TimeUnit.SECONDS);
     }
 
+    public void connectDisconnectAndIncompleteAuth(ChannelHandlerContext channelHandlerContext, InetSocketAddress localAddress, InetSocketAddress remoteAddress) {
+        logger.info("link connect and incomplete auth, now is disconnect,try connect again");
+
+        scheduledExecutorService.schedule(new Runnable() {
+            public void run() {
+                TryConnectListener tryConnectListener = new TryConnectListener(accessIpAdder,accessPort);
+                startLink(tryConnectListener);
+            }
+        },10,TimeUnit.SECONDS);
+    }
+
     public void startLink() {
         startLink(new TryConnectListener(accessIpAdder,accessPort));
     }

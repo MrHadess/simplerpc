@@ -40,6 +40,7 @@ public class ServiceAuthHandler implements ChannelReadListener<AcceptInfo>,Conne
 
     private HashMap<String,String> clientAuthCodeMap = new HashMap<String, String>();// <channelID,authCode>
     private HashSet<String> authConnectID = new HashSet<String>();
+    private HashSet<String> authenticating = new HashSet<String>();
 
     private int serviceType = -1;// 0 client,1 server
     private static final int SERVICE_TYPE_CLIENT = 0;
@@ -152,6 +153,8 @@ public class ServiceAuthHandler implements ChannelReadListener<AcceptInfo>,Conne
             logger.info(String.format("Auth fail for client --channelID:%s",channelID));
             return;
         }
+        // remove auth success channelID
+        authenticating.remove(channelID);
         // auth success then do connect success
         authConnectID.add(channelID);
         boolean connectState = serviceMessage.connectSuccess(this,channelHandlerContext);
@@ -204,6 +207,8 @@ public class ServiceAuthHandler implements ChannelReadListener<AcceptInfo>,Conne
             channelHandlerContext.channel().close();
             return;
         }
+        // remove auth success channelID
+        authenticating.remove(channelID);
         // auth success then do connect success
         authConnectID.add(channelID);
 
@@ -240,15 +245,25 @@ public class ServiceAuthHandler implements ChannelReadListener<AcceptInfo>,Conne
         // has register listener and auth success connect,just do it
         if (authStateListener != null && authConnectID.contains(channelID)) {
             ChannelHandlerContext ctx = connectionsToContext.getChannelHandlerContext(channelID);
-            authStateListener.authSuccessDisconnect(
-                    ctx,
-                    (InetSocketAddress) ctx.channel().localAddress(),
-                    (InetSocketAddress) ctx.channel().remoteAddress()
-            );
+
+            if (authConnectID.contains(channelID)) {
+                authStateListener.authSuccessDisconnect(
+                        ctx,
+                        (InetSocketAddress) ctx.channel().localAddress(),
+                        (InetSocketAddress) ctx.channel().remoteAddress()
+                );
+            } else if (authenticating.contains(channelID)) {
+                authStateListener.connectDisconnectAndIncompleteAuth(
+                        ctx,
+                        (InetSocketAddress) ctx.channel().localAddress(),
+                        (InetSocketAddress) ctx.channel().remoteAddress()
+                );
+            }
         }
 
         clientAuthCodeMap.remove(channelID);
         authConnectID.remove(channelID);
+        authenticating.remove(channelID);
         serviceMessage.disconnect(channelID);
 
     }
@@ -257,5 +272,6 @@ public class ServiceAuthHandler implements ChannelReadListener<AcceptInfo>,Conne
         if (serviceType == SERVICE_TYPE_SERVER) {
             logger.info("has new client connect",channelID);
         }
+        authenticating.add(channelID);
     }
 }

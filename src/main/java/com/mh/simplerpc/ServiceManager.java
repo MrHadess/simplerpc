@@ -35,7 +35,7 @@ public class ServiceManager {
     private ProtocolCore protocolCore;
 
     public void startup() throws LoadSSLEngineException {
-        logger.info("SimpleRPC startup (version:1.1.1.2)");
+        logger.info("SimpleRPC startup (version:1.1.2)");
         communicationManager.startup();
 
 

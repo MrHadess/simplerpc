@@ -27,7 +27,6 @@ public class CommunicationManager {
     private ExecutorService runGroupService = Executors.newCachedThreadPool();
 
     private LoopListenerStartup loopListenerStartup;
-//    private RegistryLinkStartup registryLinkStartup;
     private RegistryLinkStartup2 registryLinkStartup;
 
     @Deprecated
