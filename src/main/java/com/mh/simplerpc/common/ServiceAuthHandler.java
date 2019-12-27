@@ -243,7 +243,7 @@ public class ServiceAuthHandler implements ChannelReadListener<AcceptInfo>,Conne
         logger.info(String.format("disconnect %s",channelID));
 
         // has register listener and auth success connect,just do it
-        if (authStateListener != null && authConnectID.contains(channelID)) {
+        if (authStateListener != null) {
             ChannelHandlerContext ctx = connectionsToContext.getChannelHandlerContext(channelID);
 
             if (authConnectID.contains(channelID)) {
