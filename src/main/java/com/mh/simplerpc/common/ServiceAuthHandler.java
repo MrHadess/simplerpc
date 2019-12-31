@@ -27,7 +27,7 @@ import java.net.InetSocketAddress;
 import java.util.HashMap;
 import java.util.HashSet;
 
-public class ServiceAuthHandler implements ChannelReadListener<AcceptInfo>,ConnectionsToContext.ChannelConnectionStateListener,ServiceControl {
+public class ServiceAuthHandler implements ChannelReadListener<AcceptInfo>,ConnectionsToContext.ChannelConnectionStateListener,ServiceControl,ClientAuthControl {
 
     private static Logger logger = LoggerFactory.getLogger(ServiceAuthHandler.class);
 
@@ -110,8 +110,22 @@ public class ServiceAuthHandler implements ChannelReadListener<AcceptInfo>,Conne
         }
     }
 
+    @Override
+    public void startClientAuthConnection(String channelID) {
+        ChannelHandlerContext channelHandlerContext = connectionsToContext.getChannelHandlerContext(channelID);
+        if (channelHandlerContext == null) {
+            logger.error(String.format("Client shaker success,after get context unable(id:%s)",channelID));
+            return;
+        }
+        authenticating.add(channelID);
+        AcceptInfo sendAcceptInfo = new AcceptInfo();
+        sendAcceptInfo.setType(CommunicationTypeEnum.StartAuthConnection);
+        channelHandlerContext.channel().writeAndFlush(sendAcceptInfo);
+    }
+
     private void TrySendAuthCodeForClient(String channelID) {
         if (serviceType != SERVICE_TYPE_SERVER) return;
+        authenticating.add(channelID);
         ChannelHandlerContext channelHandlerContext = connectionsToContext.getChannelHandlerContext(channelID);
         String checkCode = CheckCode.createCode();
         clientAuthCodeMap.put(channelID,checkCode);
@@ -272,6 +286,5 @@ public class ServiceAuthHandler implements ChannelReadListener<AcceptInfo>,Conne
         if (serviceType == SERVICE_TYPE_SERVER) {
             logger.info("has new client connect",channelID);
         }
-        authenticating.add(channelID);
     }
 }

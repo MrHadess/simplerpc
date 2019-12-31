@@ -14,7 +14,6 @@ import com.mh.simplerpc.common.LoadSSLEngine;
 import com.mh.simplerpc.common.ServiceAuthHandler;
 import com.mh.simplerpc.config.EncryptConnectInfo;
 import com.mh.simplerpc.dto.AcceptInfo;
-import com.mh.simplerpc.dto.CommunicationTypeEnum;
 import com.mh.simplerpc.exceptions.LoadSSLEngineException;
 import com.mh.simplerpc.service.ServiceMessage;
 import io.netty.bootstrap.Bootstrap;
@@ -27,7 +26,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.net.ssl.SSLEngine;
-import java.io.File;
 import java.net.InetSocketAddress;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -87,16 +85,7 @@ public class RegistryLinkStartup2 implements AuthStateListener {
 
     private HandShakerStateListener handShakerStateListener = new HandShakerStateListener() {
         public void success(String channelID) {
-            ChannelHandlerContext channelHandlerContext = connectionsToContext.getChannelHandlerContext(channelID);
-            if (channelHandlerContext == null) {
-                logger.error(String.format("Client shaker success,after get context unable(id:%s)",channelID));
-                return;
-            }
-
-            AcceptInfo sendAcceptInfo = new AcceptInfo();
-            sendAcceptInfo.setType(CommunicationTypeEnum.StartAuthConnection);
-
-            channelHandlerContext.channel().writeAndFlush(sendAcceptInfo);
+            serviceAuthHandler.startClientAuthConnection(channelID);
         }
     };
 
