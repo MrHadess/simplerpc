@@ -14,6 +14,7 @@ import com.mh.simplerpc.exceptions.UnknownResourceException;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
@@ -78,7 +79,7 @@ public class CacheToInvokeObject {
     * */
     public Method getInvokeObjectMethod(String res,String methodName,String[] methodParamType)
             throws UnknownResourceException, NoSuchMethodException, ClassNotFoundException {
-        String key = String.format("%s.%s.%s",res,methodName,methodParamType);
+        String key = String.format("%s.%s.%s",res,methodName, Arrays.toString(methodParamType));
 
         Method method = invokeMethodMap.get(key);
         if (method != null) return method;
