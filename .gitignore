@@ -30,3 +30,6 @@ hs_err_pid*
 
 /simplerpc.iml
 /.idea
+/core/core.iml
+/demo/demo.iml
+
