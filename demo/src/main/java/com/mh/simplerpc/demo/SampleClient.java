@@ -18,7 +18,6 @@ public class SampleClient {
         // Register consumer entity
         ArrayList<ConsumerEntity> consumerEntityList = new ArrayList<ConsumerEntity>();
         consumerEntityList.add(new ConsumerEntity(Hello.class));
-        consumerEntityList.add(new ConsumerEntity(Hello.Child.class));
 
         // And then you can register provider entity
 
@@ -89,7 +88,7 @@ public class SampleClient {
                     try {
                         Thread.sleep(10000);
                     } catch (InterruptedException ignored) { }
-                } catch (HelloImpl.IDontLikeException e) {
+                } catch (HelloImpl.IDoNotLikeException e) {
                     e.printStackTrace();
                 }
 
