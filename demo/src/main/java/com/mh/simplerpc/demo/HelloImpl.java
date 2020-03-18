@@ -1,6 +1,5 @@
-package com.mh.simplerpc.test;
+package com.mh.simplerpc.demo;
 
-import java.io.Serializable;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
@@ -17,7 +16,7 @@ public class HelloImpl implements Hello {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        if (true) throw new IDontLikeException("haha");
+//        if (true) throw new IDontLikeException("haha");
 //        if (true) throw new NullPointerException("haha");
 //        return new SimpleDateFormat(format).format(new Date());
         return String.format("%s",new SimpleDateFormat(format).format(new Date()));
@@ -43,6 +42,15 @@ public class HelloImpl implements Hello {
         public IDontLikeException(String message) {
             super(message);
             this.s = message;
+        }
+    }
+
+    public static class ChildTest implements HelloImpl.Child {
+        public ChildTest() {
+        }
+
+        public String showTime() {
+            return "123";
         }
     }
 

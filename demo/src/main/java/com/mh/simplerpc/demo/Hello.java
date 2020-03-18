@@ -1,6 +1,5 @@
-package com.mh.simplerpc.test;
+package com.mh.simplerpc.demo;
 
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -10,4 +9,7 @@ public interface Hello {
     void remoteShowTime();
     void testSerializableObjectTime(Date date);
     void testTypeListToRemotePrint(List<String> list);
+    interface Child {
+        String showTime();
+    }
 }
