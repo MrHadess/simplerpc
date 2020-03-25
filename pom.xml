@@ -18,7 +18,7 @@
         <maven.compiler.source>1.8</maven.compiler.source>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.encoding>UTF-8</maven.compiler.encoding>
-        <revision>1.1.5</revision>
+        <revision>1.1.10</revision>
     </properties>
 
     <dependencies>
@@ -36,7 +36,7 @@
         <dependencies>
             <dependency>
                 <groupId>com.mh.simplerpc</groupId>
-                <artifactId>core</artifactId>
+                <artifactId>simplerpc-core</artifactId>
                 <version>${revision}</version>
             </dependency>
             <dependency>

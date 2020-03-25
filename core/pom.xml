@@ -12,7 +12,7 @@
 
     <packaging>jar</packaging>
 
-    <artifactId>core</artifactId>
+    <artifactId>simplerpc-core</artifactId>
 
     <dependencies>
 
@@ -44,6 +44,7 @@
 
 
     <build>
+
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>

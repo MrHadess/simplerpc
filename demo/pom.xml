@@ -16,7 +16,7 @@
 
         <dependency>
             <groupId>com.mh.simplerpc</groupId>
-            <artifactId>core</artifactId>
+            <artifactId>simplerpc-core</artifactId>
             <version>${revision}</version>
 
         </dependency>
