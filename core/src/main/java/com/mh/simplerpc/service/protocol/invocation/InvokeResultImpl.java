@@ -8,9 +8,12 @@
 
 package com.mh.simplerpc.service.protocol.invocation;
 
+import com.mh.simplerpc.pojo.InvokeObjectInfo;
+import com.mh.simplerpc.service.protocol.CallRemote;
+
 import java.lang.reflect.Type;
 
-public class InvokeResultImpl implements InvokeResult,Cloneable {
+public class InvokeResultImpl implements InvokeResult,InvokeState,Cloneable {
 
     private Type type;
 
@@ -21,11 +24,42 @@ public class InvokeResultImpl implements InvokeResult,Cloneable {
     private Object returnObject;
 
     private String processID;
+    private int handlerState = 0;// '0'-UnknownUnlockOrLock '-1'-RunUnlock '1'-RunLock
 
     public InvokeResultImpl(Type type) {
         this.type = type;
     }
 
+    public void call(CallRemote callRemote,InvokeObjectInfo invokeObjectInfo) {
+        synchronized (this) {
+            callRemote.call(invokeObjectInfo, this, this);
+        }
+    }
+
+    @Override
+    public void requestSuccess() {
+        if (handlerState >= 0) {
+            handlerState++;
+            try {
+                this.wait();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    @Override
+    public void responseData() {
+        synchronized (this) {
+            if (handlerState == 0) {
+                handlerState--;
+                return;
+            }
+            if (handlerState >= 1) {
+                this.notify();
+            }
+        }
+    }
 
     public void returnType(boolean hasReturn, Object o) {
         this.hasReturn = hasReturn;

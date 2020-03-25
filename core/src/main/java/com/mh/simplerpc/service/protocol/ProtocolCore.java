@@ -19,6 +19,7 @@ import com.mh.simplerpc.pojo.InvokeObjectResultInfo;
 import com.mh.simplerpc.service.ServiceProtocol;
 import com.mh.simplerpc.service.protocol.invocation.InvocationHandlerImpl;
 import com.mh.simplerpc.service.protocol.invocation.InvokeResult;
+import com.mh.simplerpc.service.protocol.invocation.InvokeState;
 import com.mh.simplerpc.service.protocol.result.CallToFunction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,6 +45,7 @@ public class ProtocolCore implements ServiceProtocol.Invocation,CallRemote {
 
     private HashSet<String> remoteSupportResSet = new HashSet<String>();
     private HashMap<String,InvokeResult> invokeResultMap = new HashMap<String, InvokeResult>();
+    private HashMap<String,InvokeState> invokeStateMap = new HashMap<String, InvokeState>();
     private HashMap<String,InvokeObjectInfo> invokeThreadMap = new HashMap<String, InvokeObjectInfo>();
 
     private InvocationHandler invocationHandler = new InvocationHandlerImpl(this);
@@ -179,13 +181,16 @@ public class ProtocolCore implements ServiceProtocol.Invocation,CallRemote {
                 break;
         }
 
+        InvokeState invokeState = invokeStateMap.get(processID);
+        invokeState.responseData();
 
-//        invokeResultMap.remove(processID);
+        invokeResultMap.remove(processID);
+        invokeStateMap.remove(processID);
 //        invokeResult.notify();
 
-        synchronized (invokeResult) {
-            invokeResult.notify();
-        }
+//        synchronized (invokeResult) {
+//            invokeResult.notify();
+//        }
 
 //        InvokeObjectInfo invokeObjectInfo = invokeThreadMap.get(processID);
 //        synchronized (invokeObjectInfo) {
@@ -240,6 +245,21 @@ public class ProtocolCore implements ServiceProtocol.Invocation,CallRemote {
         }
 
 
+    }
+
+    @Override
+    public void call(InvokeObjectInfo invokeObjectInfo, InvokeResult invokeResult, InvokeState invokeState) {
+        //  allocation processID
+        if (!connectState) throw new DoesNotConnectException();
+        if (!remoteSupportResSet.contains(invokeObjectInfo.getRes())) throw new RemoteUnsupportedResException();
+
+        String processID = UUID.randomUUID().toString();
+        invokeResultMap.put(processID,invokeResult);
+        invokeStateMap.put(processID,invokeState);
+        invokeThreadMap.put(processID,invokeObjectInfo);
+        resultControl.remoteInvokeObject(processID,invokeObjectInfo);
+
+        invokeState.requestSuccess();
     }
 
     public void recoveryCallObject(String processID) {

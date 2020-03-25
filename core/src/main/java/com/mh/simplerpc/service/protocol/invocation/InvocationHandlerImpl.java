@@ -61,22 +61,24 @@ public class InvocationHandlerImpl implements InvocationHandler {
 
 
         InvokeResultImpl invokeResult = new InvokeResultImpl(method.getGenericReturnType());
+        invokeResult.call(callRemote,invokeObjectInfo);
         // do something
-        callRemote.call(invokeObjectInfo,invokeResult,Thread.currentThread());
+//        callRemote.call(invokeObjectInfo,invokeResult,Thread.currentThread());
 
-        synchronized (invokeResult) {
-            final InvokeResultImpl newInvokeResultImpl = (InvokeResultImpl) invokeResult.clone();
-            callRemote.recoveryCallObject(newInvokeResultImpl.getProcessID());
+//        synchronized (invokeResult) {
+//            final InvokeResultImpl newInvokeResultImpl = (InvokeResultImpl) invokeResult.clone();
+//            InvokeResultImpl newInvokeResultImpl = invokeResult;
+//            callRemote.recoveryCallObject(newInvokeResultImpl.getProcessID());
 //            System.out.println(String.format("print newInvokeResultImpl :%s",newInvokeResultImpl));
 //        Thread.sleep(2000);
-            if (newInvokeResultImpl.isHasException()) {
-                throw newInvokeResultImpl.getException();
+            if (invokeResult.isHasException()) {
+                throw invokeResult.getException();
             }
 
-            if (newInvokeResultImpl.isHasReturn()) {
-                return newInvokeResultImpl.getReturnObject();
+            if (invokeResult.isHasReturn()) {
+                return invokeResult.getReturnObject();
             }
-        }
+//        }
 
 //        System.out.println("-----------------Thread notify");
 
