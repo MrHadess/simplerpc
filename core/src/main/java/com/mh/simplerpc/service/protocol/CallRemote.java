@@ -14,8 +14,6 @@ import com.mh.simplerpc.service.protocol.invocation.InvokeState;
 
 public interface CallRemote {
 
-    void call(InvokeObjectInfo invokeObjectInfo, InvokeResult invokeResult, Thread thread);
     void call(InvokeObjectInfo invokeObjectInfo, InvokeResult invokeResult, InvokeState invokeState);
-    void recoveryCallObject(String processID);
 
 }

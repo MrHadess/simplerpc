@@ -46,7 +46,6 @@ public class ProtocolCore implements ServiceProtocol.Invocation,CallRemote {
     private HashSet<String> remoteSupportResSet = new HashSet<String>();
     private HashMap<String,InvokeResult> invokeResultMap = new HashMap<String, InvokeResult>();
     private HashMap<String,InvokeState> invokeStateMap = new HashMap<String, InvokeState>();
-    private HashMap<String,InvokeObjectInfo> invokeThreadMap = new HashMap<String, InvokeObjectInfo>();
 
     private InvocationHandler invocationHandler = new InvocationHandlerImpl(this);
     private CallToFunction callToFunction;
@@ -146,7 +145,6 @@ public class ProtocolCore implements ServiceProtocol.Invocation,CallRemote {
 
     public void acceptInvokeObjectResult(String processID, InvokeObjectResultInfo invokeObjectResultInfo) {
         InvokeResult invokeResult = invokeResultMap.get(processID);
-        invokeResult.setProcessID(processID);
         switch (invokeObjectResultInfo.getInvokeState()) {
             case UnknownResult:
                 invokeResult.returnType(false, null);
@@ -186,16 +184,6 @@ public class ProtocolCore implements ServiceProtocol.Invocation,CallRemote {
 
         invokeResultMap.remove(processID);
         invokeStateMap.remove(processID);
-//        invokeResult.notify();
-
-//        synchronized (invokeResult) {
-//            invokeResult.notify();
-//        }
-
-//        InvokeObjectInfo invokeObjectInfo = invokeThreadMap.get(processID);
-//        synchronized (invokeObjectInfo) {
-//            invokeObjectInfo.notify();
-//        }
 
     }
 
@@ -215,38 +203,6 @@ public class ProtocolCore implements ServiceProtocol.Invocation,CallRemote {
         }
     }
 
-    public void call(final InvokeObjectInfo invokeObjectInfo,final InvokeResult invokeResult,final Thread thread) {
-        //  allocation processID
-        if (!connectState) throw new DoesNotConnectException();
-        if (!remoteSupportResSet.contains(invokeObjectInfo.getRes())) throw new RemoteUnsupportedResException();
-
-        String processID = UUID.randomUUID().toString();
-        invokeResultMap.put(processID,invokeResult);
-        invokeThreadMap.put(processID,invokeObjectInfo);
-        resultControl.remoteInvokeObject(processID,invokeObjectInfo);
-
-
-//        synchronized (invokeObjectInfo) {
-//            try {
-//                invokeObjectInfo.wait();
-//            } catch (InterruptedException e) {
-//                e.printStackTrace();
-//            }
-//        }
-
-        synchronized (invokeResult) {
-            try {
-                if (invokeResult.getProcessID() == null) {
-                    invokeResult.wait();
-                }
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
-
-
-    }
-
     @Override
     public void call(InvokeObjectInfo invokeObjectInfo, InvokeResult invokeResult, InvokeState invokeState) {
         //  allocation processID
@@ -256,14 +212,16 @@ public class ProtocolCore implements ServiceProtocol.Invocation,CallRemote {
         String processID = UUID.randomUUID().toString();
         invokeResultMap.put(processID,invokeResult);
         invokeStateMap.put(processID,invokeState);
-        invokeThreadMap.put(processID,invokeObjectInfo);
-        resultControl.remoteInvokeObject(processID,invokeObjectInfo);
+        try {
+            resultControl.remoteInvokeObject(processID,invokeObjectInfo);
+        } catch (DoesNotConnectException e) {
+            // If request fail recovery data
+            invokeResultMap.remove(processID);
+            invokeStateMap.remove(processID);
+            throw e;
+        }
 
         invokeState.requestSuccess();
-    }
-
-    public void recoveryCallObject(String processID) {
-        invokeResultMap.remove(processID);
     }
 
     public void setResultControl(ServiceProtocol.Result resultControl) {

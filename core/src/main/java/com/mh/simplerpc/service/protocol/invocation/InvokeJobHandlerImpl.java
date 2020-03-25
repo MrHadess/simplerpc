@@ -10,10 +10,17 @@ package com.mh.simplerpc.service.protocol.invocation;
 
 import com.mh.simplerpc.pojo.InvokeObjectInfo;
 import com.mh.simplerpc.service.protocol.CallRemote;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Type;
 
-public class InvokeResultImpl implements InvokeResult,InvokeState,Cloneable {
+public class InvokeJobHandlerImpl implements InvokeResult,InvokeState {
+
+    private static Logger logger = LoggerFactory.getLogger(InvokeJobHandlerImpl.class);
+
+    private static final int JOB_ACCEPT_DATA = -1;
+    private static final int JOB_LOCK_AND_WAIT_RESPONSE = 1;
 
     private Type type;
 
@@ -23,10 +30,9 @@ public class InvokeResultImpl implements InvokeResult,InvokeState,Cloneable {
     private boolean hasReturn;
     private Object returnObject;
 
-    private String processID;
     private int handlerState = 0;// '0'-UnknownUnlockOrLock '-1'-RunUnlock '1'-RunLock
 
-    public InvokeResultImpl(Type type) {
+    public InvokeJobHandlerImpl(Type type) {
         this.type = type;
     }
 
@@ -36,26 +42,33 @@ public class InvokeResultImpl implements InvokeResult,InvokeState,Cloneable {
         }
     }
 
+    /*
+    * If accept data before,don't lock process
+    * accept data before 'handlerState' value will be '-1'
+    *
+    * */
     @Override
     public void requestSuccess() {
-        if (handlerState >= 0) {
-            handlerState++;
+        if (handlerState != JOB_ACCEPT_DATA && handlerState != JOB_LOCK_AND_WAIT_RESPONSE) {
+            handlerState = JOB_LOCK_AND_WAIT_RESPONSE;
             try {
                 this.wait();
             } catch (InterruptedException e) {
-                e.printStackTrace();
+                logger.warn("Lock process fail",e);
             }
         }
     }
 
+    /*
+    * If accept data,need notify process
+    *
+    * */
     @Override
     public void responseData() {
         synchronized (this) {
-            if (handlerState == 0) {
-                handlerState--;
-                return;
-            }
-            if (handlerState >= 1) {
+            if (handlerState == JOB_ACCEPT_DATA) return;
+
+            if (handlerState == JOB_LOCK_AND_WAIT_RESPONSE) {
                 this.notify();
             }
         }
@@ -71,16 +84,8 @@ public class InvokeResultImpl implements InvokeResult,InvokeState,Cloneable {
         this.hasException = true;
     }
 
-    public String getProcessID() {
-        return processID;
-    }
-
     public Type getType() {
         return type;
-    }
-
-    public void setProcessID(String processID) {
-        this.processID = processID;
     }
 
     public boolean isHasReturn() {
@@ -109,14 +114,4 @@ public class InvokeResultImpl implements InvokeResult,InvokeState,Cloneable {
                 '}';
     }
 
-    @Override
-    protected Object clone() throws CloneNotSupportedException {
-//        return super.clone();
-        InvokeResultImpl invokeResult = new InvokeResultImpl(type);
-        invokeResult.exception = this.exception;
-        invokeResult.hasException = this.hasException;
-        invokeResult.hasReturn = this.hasReturn;
-        invokeResult.returnObject = this.returnObject;
-        return invokeResult;
-    }
 }

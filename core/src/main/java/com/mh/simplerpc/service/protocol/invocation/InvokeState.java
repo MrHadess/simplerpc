@@ -6,8 +6,14 @@ package com.mh.simplerpc.service.protocol.invocation;
 * */
 public interface InvokeState {
 
+    /*
+    * Just run once
+    * */
     void requestSuccess();
 
+    /*
+    * Just run once
+    * */
     void responseData();
 
 }

@@ -60,25 +60,17 @@ public class InvocationHandlerImpl implements InvocationHandler {
         }
 
 
-        InvokeResultImpl invokeResult = new InvokeResultImpl(method.getGenericReturnType());
-        invokeResult.call(callRemote,invokeObjectInfo);
+        InvokeJobHandlerImpl invokeJobHandler = new InvokeJobHandlerImpl(method.getGenericReturnType());
         // do something
-//        callRemote.call(invokeObjectInfo,invokeResult,Thread.currentThread());
+        invokeJobHandler.call(callRemote, invokeObjectInfo);
 
-//        synchronized (invokeResult) {
-//            final InvokeResultImpl newInvokeResultImpl = (InvokeResultImpl) invokeResult.clone();
-//            InvokeResultImpl newInvokeResultImpl = invokeResult;
-//            callRemote.recoveryCallObject(newInvokeResultImpl.getProcessID());
-//            System.out.println(String.format("print newInvokeResultImpl :%s",newInvokeResultImpl));
-//        Thread.sleep(2000);
-            if (invokeResult.isHasException()) {
-                throw invokeResult.getException();
-            }
+        if (invokeJobHandler.isHasException()) {
+            throw invokeJobHandler.getException();
+        }
 
-            if (invokeResult.isHasReturn()) {
-                return invokeResult.getReturnObject();
-            }
-//        }
+        if (invokeJobHandler.isHasReturn()) {
+            return invokeJobHandler.getReturnObject();
+        }
 
 //        System.out.println("-----------------Thread notify");
 
