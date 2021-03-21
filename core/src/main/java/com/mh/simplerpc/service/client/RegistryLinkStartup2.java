@@ -243,7 +243,8 @@ public class RegistryLinkStartup2 implements AuthStateListener {
     }
 
     public void cutLink() {
-        group.shutdownGracefully();
+//        group.shutdownGracefully();
+        group.shutdownGracefully(0,5,TimeUnit.SECONDS);
     }
 
     class HandShakerFirstAction implements Runnable {

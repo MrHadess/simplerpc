@@ -15,8 +15,9 @@ import com.mh.simplerpc.exceptions.UnknownResourceException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /*
 * design allow multiple object
@@ -27,10 +28,10 @@ import java.util.List;
 public class CacheToInvokeObject {
 
     // load model
-    private HashMap<String,ProviderEntity> providerEntityMap = new HashMap<String, ProviderEntity>();
+    private final Map<String,ProviderEntity> providerEntityMap = new ConcurrentHashMap<String, ProviderEntity>();
 
-    private HashMap<String,Object> instanceObjectMap = new HashMap<String, Object>();
-    private HashMap<String,Method> invokeMethodMap = new HashMap<String, Method>();
+    private final Map<String,Object> instanceObjectMap = new ConcurrentHashMap<String, Object>();
+    private final Map<String,Method> invokeMethodMap = new ConcurrentHashMap<String, Method>();
 
 
     public CacheToInvokeObject(List<ProviderEntity> providerEntityList) {

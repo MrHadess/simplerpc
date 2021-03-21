@@ -16,12 +16,13 @@ import io.netty.channel.ChannelHandlerContext;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class CommunicationManager {
 
     private ServiceConfig serviceConfig;
 
-    private int connectState = 0;
+    private final AtomicInteger connectStateAtomic = new AtomicInteger(0);
     private ProcessHandler processHandler;
 
     private ExecutorService runGroupService = Executors.newCachedThreadPool();
@@ -96,9 +97,9 @@ public class CommunicationManager {
     }
 
     private ServiceMessage serviceMessage = new ServiceMessage() {
-        public synchronized boolean connectSuccess(ServiceControl serviceControl, ChannelHandlerContext channelHandlerContext) {
-            if (connectState == 1) return false;
-            connectState = 1;
+        public boolean connectSuccess(ServiceControl serviceControl, ChannelHandlerContext channelHandlerContext) {
+            if (connectStateAtomic.get() == 1) return false;
+            connectStateAtomic.set(1);
             processHandler.setChannelHandlerContext(channelHandlerContext);
             serviceControl.moveMsgAcceptObject(processHandler);
             processHandler.authSuccess();
@@ -106,9 +107,9 @@ public class CommunicationManager {
         }
 
         public void disconnect(String channelID) {
-            if (connectState == 0) return;
+            if (connectStateAtomic.get() == 0) return;
             if (processHandler.tryRecoveryContext(channelID)) {
-                connectState = 0;
+                connectStateAtomic.set(0);
             }
         }
     };

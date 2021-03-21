@@ -20,6 +20,8 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
+import java.util.Scanner;
+import java.util.concurrent.TimeUnit;
 
 /*
 * use to command startup service
@@ -78,22 +80,37 @@ public class SimpleRPCServiceApplication {
         }
 
 
+        ServiceManager serviceManager;
         try {
-            ServiceManager serviceManager = createService(file);
+            serviceManager = createService(file);
         } catch (ClassNotFoundException e) {
-            logger.warn("Focus",e);
+            logger.warn("Startup fail,lost class",e);
+            return;
         } catch (MismatchRESFormatException e) {
-            logger.warn("Focus",e);
+            logger.warn("Startup fail,unsupported res format!",e);
+            return;
         } catch (FileNotFoundException e) {
             logger.warn(String.format("Unknown file:%s",file));
             throw e;
         }
 
-        Thread thread = Thread.currentThread();
-        synchronized (thread) {
-            thread.wait();
+        // Exit logic
+        logger.warn("Input key 'q' exit program");
+
+        Scanner scanner = new Scanner(System.in);
+        boolean holdState = true;
+        while (holdState) {
+            if (!"q".equals(scanner.next())) {
+                logger.warn("Unsupported input key value");
+                continue;
+            }
+
+            holdState = false;
+            serviceManager.shutdown();
         }
 
+        TimeUnit.SECONDS.sleep(7);
+        System.exit(0);
 
     }
 

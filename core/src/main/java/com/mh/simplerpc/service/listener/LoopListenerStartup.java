@@ -30,6 +30,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.net.ssl.SSLEngine;
+import java.util.concurrent.TimeUnit;
 
 public class LoopListenerStartup implements ServiceControl {
 
@@ -130,8 +131,10 @@ public class LoopListenerStartup implements ServiceControl {
     }
 
     public void stopListener() {
-        bossGroup.shutdownGracefully();
-        workerGroup.shutdownGracefully();
+//        bossGroup.shutdownGracefully();
+//        workerGroup.shutdownGracefully();
+        bossGroup.shutdownGracefully(0,5, TimeUnit.SECONDS);
+        workerGroup.shutdownGracefully(0,5,TimeUnit.SECONDS);
     }
 
 
